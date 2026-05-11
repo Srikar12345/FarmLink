@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
-import { db, usersTable, insertUserSchema } from "@workspace/db";
 
 const router = Router();
 
 // GET /api/users/:phone — look up a user by phone number
 router.get("/users/:phone", async (req, res) => {
   try {
+    const { db, usersTable } = await import("@workspace/db");
+    const { eq } = await import("drizzle-orm");
     const { phone } = req.params;
     const [user] = await db
       .select()
@@ -19,14 +19,15 @@ router.get("/users/:phone", async (req, res) => {
     }
     return res.json(user);
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch user");
-    return res.status(500).json({ error: "Internal server error" });
+    req.log.warn({ err }, "Database not available for GET /users/:phone");
+    return res.status(503).json({ error: "Database not available" });
   }
 });
 
 // POST /api/users — create or update a user (upsert by phone)
 router.post("/users", async (req, res) => {
   try {
+    const { db, usersTable, insertUserSchema } = await import("@workspace/db");
     const parsed = insertUserSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid request", details: parsed.error.issues });
@@ -51,8 +52,8 @@ router.post("/users", async (req, res) => {
 
     return res.status(201).json(user);
   } catch (err) {
-    req.log.error({ err }, "Failed to create/update user");
-    return res.status(500).json({ error: "Internal server error" });
+    req.log.warn({ err }, "Database not available for POST /users");
+    return res.status(503).json({ error: "Database not available" });
   }
 });
 

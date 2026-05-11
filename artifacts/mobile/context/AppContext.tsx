@@ -227,7 +227,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 54321 09876',
     farmerRating: 4.8,
     produceName: 'Godavari Tiger Prawns',
-    category: 'other',
+    category: 'seafood',
     description: 'Fresh tiger prawns from Kakinada coastal aquaculture. Zero preservatives, iced immediately after harvest. Cleaned and deveined on request. Morning catch — available till stock lasts.',
     price: 380,
     priceUnit: 'kg',
@@ -511,7 +511,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const listing = listings.find((l) => l.id === listingId);
     if (!listing) return null;
     const totalPrice = listing.price * quantity;
-    const deliveryFee = Math.max(20, Math.round(totalPrice * 0.1));
+    const hasFarmPass = currentUser.hasFarmPass ?? false;
+    const deliveryFee = hasFarmPass ? 0 : Math.max(20, Math.round(totalPrice * 0.1));
     const packagingDeposit = listing.packagingDeposit ?? 0;
     const order: Order = {
       id: `order_${Date.now()}`,
