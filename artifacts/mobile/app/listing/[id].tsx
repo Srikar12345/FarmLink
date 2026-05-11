@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EcoPackagingInfo } from '@/components/EcoPackagingInfo';
 import { FreshnessTag } from '@/components/FreshnessTag';
 import { PriceComparison } from '@/components/PriceComparison';
+import { RazorpayCheckout } from '@/components/RazorpayCheckout';
 import { useApp, type ProduceCategory } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { openMaps } from '@/utils/openMaps';
@@ -50,6 +51,7 @@ export default function ListingDetail() {
   const listing = listings.find((l) => l.id === id);
 
   const [quantity, setQuantity] = useState(1);
+  const [showPayment, setShowPayment] = useState(false);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -93,7 +95,13 @@ export default function ListingDetail() {
       );
       return;
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = (_paymentId: string) => {
+    setShowPayment(false);
+    if (!savedAddress) return;
     const order = createOrder({
       listingId: listing.id,
       consumerAddress: savedAddress.fullAddress,
@@ -391,15 +399,30 @@ export default function ListingDetail() {
           ]}
         >
           <TouchableOpacity
-            style={[styles.orderBtn, { backgroundColor: savedAddress ? colors.primary : colors.muted }]}
+            style={[styles.orderBtn, { backgroundColor: savedAddress ? '#072654' : colors.muted }]}
             onPress={handleOrder}
             activeOpacity={0.85}
           >
-            <Text style={[styles.orderBtnText, { color: savedAddress ? colors.primaryForeground : colors.mutedForeground }]}>
-              {savedAddress ? `Place Order · ₹${grandTotal}` : 'Add Address to Order'}
+            {savedAddress && (
+              <View style={styles.rzpBtnIcon}>
+                <Text style={styles.rzpBtnIconText}>R</Text>
+              </View>
+            )}
+            <Text style={[styles.orderBtnText, { color: savedAddress ? '#fff' : colors.mutedForeground }]}>
+              {savedAddress ? `Pay ₹${grandTotal} with Razorpay` : 'Add Address to Order'}
             </Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {listing && (
+        <RazorpayCheckout
+          visible={showPayment}
+          amount={grandTotal}
+          produceName={listing.produceName}
+          onSuccess={handlePaymentSuccess}
+          onDismiss={() => setShowPayment(false)}
+        />
       )}
     </View>
   );
@@ -562,6 +585,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
   },
-  orderBtn: { borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  orderBtn: { borderRadius: 14, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  rzpBtnIcon: { width: 24, height: 24, borderRadius: 6, backgroundColor: '#3395FF', alignItems: 'center', justifyContent: 'center' },
+  rzpBtnIconText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
   orderBtnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
 });

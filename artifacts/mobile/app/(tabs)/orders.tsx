@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OrderStatusBadge } from '@/components/OrderStatusBadge';
@@ -66,7 +66,7 @@ function OrderCard({ order }: { order: Order }) {
 export default function ConsumerOrders() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { getUserOrders, logout } = useApp();
+  const { getUserOrders, logout, updateRole } = useApp();
   const orders = getUserOrders();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
@@ -75,11 +75,45 @@ export default function ConsumerOrders() {
     router.replace('/auth/phone');
   };
 
+  const handleSwitchRole = () => {
+    Alert.alert(
+      'Switch Role',
+      'Choose a different role to use FarmLink as:',
+      [
+        {
+          text: '🌾 Farmer — Sell Produce',
+          onPress: async () => {
+            await updateRole('farmer');
+            router.replace('/(farmer)' as any);
+          },
+        },
+        {
+          text: '🏍️ Rider — Deliver & Earn',
+          onPress: async () => {
+            await updateRole('rider');
+            router.replace('/(rider)' as any);
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
+  };
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Fixed header — outside FlatList so Pressable always works */}
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.heading, { color: colors.foreground }]}>My Orders</Text>
+        <Pressable
+          style={({ pressed }) => [
+            styles.switchRoleBtn,
+            { borderColor: colors.border, opacity: pressed ? 0.6 : 1 },
+          ]}
+          onPress={handleSwitchRole}
+        >
+          <MaterialCommunityIcons name="swap-horizontal" size={15} color={colors.mutedForeground} />
+          <Text style={[styles.switchRoleText, { color: colors.mutedForeground }]}>Switch Role</Text>
+        </Pressable>
         <Pressable
           style={({ pressed }) => [
             styles.logoutBtn,
@@ -127,6 +161,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   heading: { fontSize: 22, fontFamily: 'Inter_700Bold' },
+  switchRoleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  switchRoleText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',

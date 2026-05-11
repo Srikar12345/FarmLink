@@ -18,7 +18,7 @@ const VEHICLES: { type: VehicleType; label: string; emoji: string }[] = [
 export default function RiderProfile() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { currentUser, updateRiderProfile, switchRole, logout, orders } = useApp();
+  const { currentUser, updateRiderProfile, updateRole, logout, orders } = useApp();
   const [uploading, setUploading] = useState(false);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
@@ -56,10 +56,29 @@ export default function RiderProfile() {
     router.replace('/auth/phone');
   };
 
-  const handleSwitchRole = async () => {
+  const handleSwitchRole = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await switchRole();
-    router.replace('/auth/phone');
+    Alert.alert(
+      'Switch Role',
+      'Choose a different role to use FarmLink as:',
+      [
+        {
+          text: '🛒 Consumer — Buy Fresh',
+          onPress: async () => {
+            await updateRole('consumer');
+            router.replace('/(tabs)' as any);
+          },
+        },
+        {
+          text: '🌾 Farmer — Sell Produce',
+          onPress: async () => {
+            await updateRole('farmer');
+            router.replace('/(farmer)' as any);
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+    );
   };
 
   return (

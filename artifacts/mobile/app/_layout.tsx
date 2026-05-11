@@ -28,6 +28,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/phone" options={{ animation: 'fade' }} />
       <Stack.Screen name="auth/otp" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="auth/profile" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="auth/role" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="auth/rider-id" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(farmer)" />

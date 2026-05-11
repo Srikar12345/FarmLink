@@ -410,6 +410,7 @@ interface AppContextType {
   requestPackagingReturn: (orderId: string) => void;
   saveAddress: (addr: SavedAddress) => Promise<void>;
   activateFarmPass: () => Promise<void>;
+  updateRole: (role: UserRole, vehicleType?: VehicleType) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -660,6 +661,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem('farmlink_user', JSON.stringify(updated));
   };
 
+  const updateRole = async (role: UserRole, vehicleType?: VehicleType) => {
+    if (!currentUser) return;
+    const updated: User = {
+      ...currentUser,
+      role,
+      ...(vehicleType ? { vehicleType } : {}),
+    };
+    setCurrentUser(updated);
+    await AsyncStorage.setItem('farmlink_user', JSON.stringify(updated));
+  };
+
   const getUserOrders = () => orders.filter((o) => o.consumerId === currentUser?.id);
   const getFarmerOrders = () =>
     orders.filter((o) => listings.some((l) => l.farmerId === currentUser?.id && l.id === o.listingId));
@@ -698,6 +710,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         requestPackagingReturn,
         saveAddress,
         activateFarmPass,
+        updateRole,
       }}
     >
       {children}
