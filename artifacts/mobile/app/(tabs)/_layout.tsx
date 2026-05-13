@@ -27,6 +27,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'bag', selected: 'bag.fill' }} />
         <Label>Orders</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <Icon sf={{ default: 'person.circle', selected: 'person.circle.fill' }} />
+        <Label>Profile</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -109,6 +113,18 @@ function ClassicTabLayout() {
               <SymbolView name="bag" tintColor={color} size={24} />
             ) : (
               <MaterialCommunityIcons name="shopping-outline" size={24} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="person.circle" tintColor={color} size={24} />
+            ) : (
+              <MaterialCommunityIcons name="account-circle-outline" size={24} color={color} />
             ),
         }}
       />

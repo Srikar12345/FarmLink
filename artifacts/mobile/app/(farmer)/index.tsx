@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { FlatList, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FreshnessTag } from '@/components/FreshnessTag';
@@ -58,18 +58,42 @@ function MyListingCard({ listing }: { listing: Listing }) {
 export default function FarmerHome() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { currentUser, getFarmerListings, getFarmerOrders, logout } = useApp();
+  const { currentUser, getFarmerListings, getFarmerOrders, logout, updateRole } = useApp();
 
   const handleLogout = async () => {
     await logout();
     router.replace('/auth/phone');
   };
+
+  const handleSwitchRole = () => {
+    Alert.alert('Switch Role', 'Choose a different role to use FarmLink as:', [
+      {
+        text: '🛒 Consumer — Buy Fresh',
+        onPress: async () => {
+          await updateRole('consumer');
+          router.replace('/(tabs)' as any);
+        },
+      },
+      {
+        text: '🏍️ Rider — Deliver & Earn',
+        onPress: async () => {
+          await updateRole('rider');
+          router.replace('/(rider)' as any);
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   const myListings = getFarmerListings();
   const myOrders = getFarmerOrders();
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
   const pendingOrders = myOrders.filter((o) => o.status === 'pending').length;
   const deliveredOrders = myOrders.filter((o) => o.status === 'delivered').length;
+  const totalRevenue = myOrders
+    .filter((o) => o.status === 'delivered')
+    .reduce((sum, o) => sum + o.totalPrice, 0);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -92,16 +116,27 @@ export default function FarmerHome() {
                   </View>
                 )}
               </View>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.logoutBtn,
-                  { borderColor: colors.destructive + '50', backgroundColor: colors.destructive + '08', opacity: pressed ? 0.6 : 1 },
-                ]}
-                onPress={handleLogout}
-              >
-                <MaterialCommunityIcons name="logout" size={15} color={colors.destructive} />
-                <Text style={[styles.logoutText, { color: colors.destructive }]}>Log Out</Text>
-              </Pressable>
+              <View style={styles.headerActions}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.switchBtn,
+                    { borderColor: colors.border, opacity: pressed ? 0.6 : 1 },
+                  ]}
+                  onPress={handleSwitchRole}
+                >
+                  <MaterialCommunityIcons name="swap-horizontal" size={14} color={colors.mutedForeground} />
+                  <Text style={[styles.switchBtnText, { color: colors.mutedForeground }]}>Switch</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.logoutBtn,
+                    { borderColor: colors.destructive + '50', backgroundColor: colors.destructive + '08', opacity: pressed ? 0.6 : 1 },
+                  ]}
+                  onPress={handleLogout}
+                >
+                  <MaterialCommunityIcons name="logout" size={14} color={colors.destructive} />
+                </Pressable>
+              </View>
             </View>
 
             <View style={styles.statsRow}>
@@ -116,6 +151,10 @@ export default function FarmerHome() {
               <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.statNum, { color: colors.freshGreen }]}>{deliveredOrders}</Text>
                 <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Delivered</Text>
+              </View>
+              <View style={[styles.statCard, { backgroundColor: colors.freshGreenBg, borderColor: colors.freshGreen + '40' }]}>
+                <Text style={[styles.statNum, { color: colors.freshGreen, fontSize: 18 }]}>₹{totalRevenue}</Text>
+                <Text style={[styles.statLabel, { color: colors.freshGreen }]}>Earned</Text>
               </View>
             </View>
 
@@ -153,15 +192,24 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   list: { paddingHorizontal: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 },
-  logoutBtn: {
+  headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 4 },
+  switchBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
+    gap: 4,
+    paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 10,
     borderWidth: 1,
-    marginTop: 4,
+  },
+  switchBtnText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  logoutBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
   },
   logoutText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   greeting: { fontSize: 12, fontFamily: 'Inter_400Regular' },

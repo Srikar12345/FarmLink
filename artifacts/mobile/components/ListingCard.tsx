@@ -29,6 +29,17 @@ const CATEGORY_COLORS: Record<ProduceCategory, string> = {
   other: '#6B7280',
 };
 
+const RETAIL_SAVINGS: Record<ProduceCategory, number> = {
+  vegetables: 30,
+  fruits: 25,
+  grains: 20,
+  dairy: 15,
+  herbs: 40,
+  seafood: 35,
+  meat: 25,
+  other: 20,
+};
+
 interface ListingCardProps {
   listing: Listing;
 }
@@ -36,6 +47,7 @@ interface ListingCardProps {
 export function ListingCard({ listing }: ListingCardProps) {
   const colors = useColors();
   const iconColor = CATEGORY_COLORS[listing.category];
+  const savingsPct = RETAIL_SAVINGS[listing.category];
 
   return (
     <TouchableOpacity
@@ -62,21 +74,29 @@ export function ListingCard({ listing }: ListingCardProps) {
           {listing.farmerName} · {listing.farmerLocation}
         </Text>
 
-        <View style={styles.bottomRow}>
+        <View style={styles.tagsRow}>
           <FreshnessTag harvestTime={listing.harvestTime} />
-          <View style={styles.meta}>
-            <Text style={[styles.qty, { color: colors.mutedForeground }]}>
-              {listing.quantity} {listing.quantityUnit} left
-            </Text>
-            {listing.totalReviews > 0 && (
-              <View style={styles.ratingRow}>
-                <MaterialCommunityIcons name="star" size={12} color={colors.starColor} />
-                <Text style={[styles.rating, { color: colors.mutedForeground }]}>
-                  {listing.rating.toFixed(1)}
-                </Text>
-              </View>
-            )}
+          <View style={[styles.deliveryChip, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+            <MaterialCommunityIcons name="lightning-bolt" size={10} color={colors.primary} />
+            <Text style={[styles.deliveryText, { color: colors.primary }]}>~45 min</Text>
           </View>
+          <View style={[styles.savingsChip, { backgroundColor: '#16A34A10', borderColor: '#16A34A30' }]}>
+            <Text style={[styles.savingsText, { color: '#16A34A' }]}>~{savingsPct}% below retail</Text>
+          </View>
+        </View>
+
+        <View style={styles.bottomRow}>
+          <Text style={[styles.qty, { color: colors.mutedForeground }]}>
+            {listing.quantity} {listing.quantityUnit} left
+          </Text>
+          {listing.totalReviews > 0 && (
+            <View style={styles.ratingRow}>
+              <MaterialCommunityIcons name="star" size={12} color={colors.starColor} />
+              <Text style={[styles.rating, { color: colors.mutedForeground }]}>
+                {listing.rating.toFixed(1)}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -90,7 +110,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 14,
     marginBottom: 12,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
@@ -108,7 +128,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: 4,
+    gap: 5,
   },
   topRow: {
     flexDirection: 'row',
@@ -133,16 +153,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
   },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    alignItems: 'center',
+  },
+  deliveryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  deliveryText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  savingsChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  savingsText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  meta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   qty: {
     fontSize: 11,
