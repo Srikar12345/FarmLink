@@ -566,11 +566,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    const order = orders.find((o) => o.id === orderId);
     const updated = orders.map((o) =>
       o.id === orderId ? { ...o, status, updatedAt: new Date().toISOString() } : o,
     );
     setOrders(updated);
     saveOrders(updated);
+    if (order && (status === 'picked_up' || status === 'delivered' || status === 'cancelled')) {
+      import('../utils/events').then(({ AppEvents }) => {
+        AppEvents.emit('order:status', {
+          orderId,
+          status,
+          produceName: order.produceName,
+          riderName: order.riderName,
+        });
+      });
+    }
   };
 
   const updateRiderProfile = async (

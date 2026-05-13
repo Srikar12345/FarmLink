@@ -14,6 +14,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ToastBanner } from '@/components/ToastBanner';
 import { AppProvider } from '@/context/AppContext';
 
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +23,7 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
+    <>
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="onboarding" />
@@ -46,6 +48,8 @@ function RootLayoutNav() {
         options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
       />
     </Stack>
+    <ToastBanner />
+    </>
   );
 }
 

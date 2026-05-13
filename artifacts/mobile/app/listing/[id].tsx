@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EcoPackagingInfo } from '@/components/EcoPackagingInfo';
 import { FreshnessTag } from '@/components/FreshnessTag';
 import { PriceComparison } from '@/components/PriceComparison';
-import { RazorpayCheckout } from '@/components/RazorpayCheckout';
+import { UPICheckout } from '@/components/UPICheckout';
 import { useApp, type ProduceCategory } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { openMaps } from '@/utils/openMaps';
@@ -416,7 +416,7 @@ export default function ListingDetail() {
       )}
 
       {listing && (
-        <RazorpayCheckout
+        <UPICheckout
           visible={showPayment}
           amount={grandTotal}
           produceName={listing.produceName}
