@@ -37,7 +37,7 @@ app.use(express.static(mobileDist));
 app.use("/api", router);
 
 // Catch-all handler for client-side routing fallback (SPA support)
-app.get("(.*)", (req, res, next) => {
+app.get("/*path", (req, res, next) => {
   if (req.path.startsWith("/api")) {
     return next();
   }
