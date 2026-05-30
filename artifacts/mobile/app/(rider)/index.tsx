@@ -19,12 +19,24 @@ import { useApp, type Order } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { openMaps } from '@/utils/openMaps';
 
-function NavButton({ address, label }: { address: string; label: string }) {
+function NavButton({ order, address, label }: { order: Order; address: string; label: string }) {
   const colors = useColors();
+  const handleNavigate = () => {
+    openMaps(address);
+    import('../../utils/events').then(({ AppEvents }) => {
+      AppEvents.emit('order:status', {
+        orderId: order.id,
+        status: 'rider_navigating',
+        produceName: order.produceName,
+        riderName: order.riderName || 'Rider',
+      });
+    });
+  };
+
   return (
     <TouchableOpacity
       style={[styles.navBtn, { backgroundColor: colors.consumerColor + '12', borderColor: colors.consumerColor + '30' }]}
-      onPress={() => openMaps(address)}
+      onPress={handleNavigate}
       activeOpacity={0.8}
     >
       <MaterialCommunityIcons name="navigation-variant-outline" size={13} color={colors.consumerColor} />
@@ -86,7 +98,7 @@ function DeliveryCard({
               {order.farmerLocation}
             </Text>
           </View>
-          <NavButton address={order.farmerLocation} label="Navigate" />
+          <NavButton order={order} address={order.farmerLocation} label="Navigate" />
         </View>
 
         <View style={[styles.routeLine, { backgroundColor: colors.border }]} />
@@ -104,7 +116,7 @@ function DeliveryCard({
               {order.consumerPhone}
             </Text>
           </View>
-          <NavButton address={order.consumerAddress} label="Navigate" />
+          <NavButton order={order} address={order.consumerAddress} label="Navigate" />
         </View>
 
         {order.packagingReturnRequested && (

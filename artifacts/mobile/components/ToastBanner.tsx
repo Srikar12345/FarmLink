@@ -31,6 +31,15 @@ function getContent(toast: Toast): ToastContent | null {
           ? `${toast.riderName} picked up ${toast.produceName}`
           : `${toast.produceName} has been picked up`,
       };
+    case 'rider_navigating':
+      return {
+        icon: 'map-marker-distance',
+        color: '#7C3AED',
+        title: 'Rider is navigating!',
+        message: toast.riderName
+          ? `${toast.riderName} started navigating to location`
+          : 'Rider started navigating to location',
+      };
     case 'delivered':
       return {
         icon: 'check-circle',
@@ -83,7 +92,7 @@ export function ToastBanner() {
 
   useEffect(() => {
     const unsub = AppEvents.on('order:status', (payload: OrderStatusEvent) => {
-      if (['picked_up', 'delivered', 'cancelled'].includes(payload.status)) {
+      if (['picked_up', 'delivered', 'cancelled', 'rider_navigating'].includes(payload.status)) {
         showToast({
           id: `${payload.orderId}_${payload.status}`,
           status: payload.status,
