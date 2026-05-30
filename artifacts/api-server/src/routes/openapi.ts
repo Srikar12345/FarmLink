@@ -7,7 +7,7 @@ const openapiSpec = {
   info: {
     title: "FarmLink API",
     version: "1.0.0",
-    description: "API for connecting local farmers and consumers in East Godavari, AP"
+    description: "API for connecting local farmers and consumers in East Godavari, AP. Supports Linktree-style interactive checkout sheets. You can generate quick-buy links in the format: https://farmlink-5mip.onrender.com/quick-buy?crop={cropName} so users can view local stock and checkout instantly with one tap."
   },
   servers: [
     {
