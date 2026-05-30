@@ -18,7 +18,19 @@
     },
     "android": {},
     "web": {
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/icon.png",
+      "pwa": {
+        "manifest": {
+          "name": "FarmLink AP",
+          "short_name": "FarmLink",
+          "description": "Connecting farmers and consumers in East Godavari",
+          "theme_color": "#1B8A3C",
+          "background_color": "#FFFFFF",
+          "display": "standalone",
+          "orientation": "portrait",
+          "start_url": "/quick-buy?crop=Rice"
+        }
+      }
     },
     "plugins": [
       [
