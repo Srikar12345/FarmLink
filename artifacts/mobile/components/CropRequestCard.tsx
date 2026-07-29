@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { type CropRequest, type ProduceCategory, type RequesterType, type RequestFrequency } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
@@ -76,9 +76,17 @@ export function CropRequestCard({ request, showPledge, hasAlreadyPledged, onPled
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.topRow}>
-        <View style={[styles.iconBox, { backgroundColor: iconColor + '18' }]}>
-          <MaterialCommunityIcons name={CATEGORY_ICONS[request.category]} size={26} color={iconColor} />
-        </View>
+        {request.imageUri ? (
+          <Image
+            source={typeof request.imageUri === 'string' ? { uri: request.imageUri } : request.imageUri as number}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.iconBox, { backgroundColor: iconColor + '18' }]}>
+            <MaterialCommunityIcons name={CATEGORY_ICONS[request.category]} size={26} color={iconColor} />
+          </View>
+        )}
         <View style={styles.topContent}>
           <Text style={[styles.produce, { color: colors.foreground }]} numberOfLines={1}>
             {request.produceName}
@@ -178,9 +186,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   topRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  thumbnail: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    flexShrink: 0,
+  },
   iconBox: {
-    width: 52,
-    height: 52,
+    width: 56,
+    height: 56,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

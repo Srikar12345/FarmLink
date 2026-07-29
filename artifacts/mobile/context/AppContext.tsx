@@ -106,6 +106,7 @@ export interface Order {
 }
 
 export interface CropRequest {
+  imageUri?: number | string;
   id: string;
   requesterId: string;
   requesterName: string;
@@ -300,6 +301,7 @@ const SEED_REQUESTS: CropRequest[] = [
     requesterType: 'home',
     requesterLocation: 'Kakinada, East Godavari',
     produceName: 'Cold-Pressed Coconut Oil',
+    imageUri: require('../assets/images/produce_cold_pressed_oil.jpg'),
     category: 'other',
     quantityNeeded: 5,
     quantityUnit: 'litre',
@@ -338,6 +340,7 @@ const SEED_REQUESTS: CropRequest[] = [
     requesterType: 'business',
     requesterLocation: 'Amalapuram, East Godavari',
     produceName: 'Fresh Curry Leaves',
+    imageUri: require('../assets/images/produce_curry_leaves.jpg'),
     category: 'herbs',
     quantityNeeded: 2,
     quantityUnit: 'kg',
@@ -376,6 +379,7 @@ const SEED_REQUESTS: CropRequest[] = [
     requesterType: 'restaurant',
     requesterLocation: 'Rajamahendravaram, East Godavari',
     produceName: 'Mixed Seasonal Vegetables (Zero Pesticide)',
+    imageUri: require('../assets/images/produce_mixed_vegetables.jpg'),
     category: 'vegetables',
     quantityNeeded: 10,
     quantityUnit: 'kg',
