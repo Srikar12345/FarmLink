@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { type Listing, type ProduceCategory } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
@@ -55,9 +55,13 @@ export function ListingCard({ listing }: ListingCardProps) {
       activeOpacity={0.75}
       onPress={() => router.push(`/listing/${listing.id}`)}
     >
-      <View style={[styles.iconBox, { backgroundColor: iconColor + '18' }]}>
-        <MaterialCommunityIcons name={CATEGORY_ICONS[listing.category]} size={36} color={iconColor} />
-      </View>
+      {listing.imageUri ? (
+        <Image source={typeof listing.imageUri === 'string' ? { uri: listing.imageUri } : listing.imageUri} style={styles.thumbnail} resizeMode="cover" />
+      ) : (
+        <View style={[styles.iconBox, { backgroundColor: iconColor + '18' }]}>
+          <MaterialCommunityIcons name={CATEGORY_ICONS[listing.category]} size={36} color={iconColor} />
+        </View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.topRow}>
@@ -117,9 +121,16 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  thumbnail: {
+    width: 72,
+    height: 72,
+    borderRadius: 14,
+    marginRight: 14,
+    flexShrink: 0,
+  },
   iconBox: {
-    width: 64,
-    height: 64,
+    width: 72,
+    height: 72,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',

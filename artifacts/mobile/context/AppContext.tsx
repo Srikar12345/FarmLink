@@ -64,7 +64,7 @@ export interface Listing {
   priceUnit: string;
   quantity: number;
   quantityUnit: string;
-  imageUri?: string;
+  imageUri?: number | string;
   harvestTime: string;
   isAvailable: boolean;
   rating: number;
@@ -136,6 +136,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerRating: 4.8,
     produceName: 'Sona Masuri Raw Rice',
     category: 'grains',
+    imageUri: require('../assets/images/listing_sona_masuri_rice.jpg'),
     description: 'GI-tagged Sona Masuri from Razole mandal. Medium-grain, low-starch. Milled fresh at Rajam Rice Mill, Kakinada Road. Chemical-free paddy cultivation. Ideal for daily cooking, light on stomach.',
     price: 52,
     priceUnit: 'kg',
@@ -159,6 +160,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerRating: 4.9,
     produceName: 'BPT 5204 Boiled Rice',
     category: 'grains',
+    imageUri: require('../assets/images/listing_bpt_boiled_rice.jpg'),
     description: 'Traditional BPT Samba boiled rice from Amalapuram. Parboiled for better nutrition. Mild aroma, firm texture. Milled and sorted at regulated mill. Preferred for andhra meals and biryani base.',
     price: 48,
     priceUnit: 'kg',
@@ -182,6 +184,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerRating: 4.7,
     produceName: 'Raw Turmeric Fingers',
     category: 'herbs',
+    imageUri: require('../assets/images/listing_raw_turmeric.jpg'),
     description: 'Freshly harvested turmeric rhizomes from Rajam. Deep orange inside — high curcumin content. Can be consumed raw, dried, or juiced. Naturally grown without any chemical fertiliser.',
     price: 60,
     priceUnit: 'kg',
@@ -205,6 +208,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerRating: 4.9,
     produceName: 'Fresh Tender Coconuts',
     category: 'fruits',
+    imageUri: require('../assets/images/listing_tender_coconuts.jpg'),
     description: 'Sweet tender coconuts from Kakinada coastal belt. Thick malai, sweet water. Picked this morning from 15-year-old palms. Order 6+ for bulk pricing. No preservatives, naturally fresh.',
     price: 30,
     priceUnit: 'piece',
@@ -228,6 +232,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerRating: 4.8,
     produceName: 'Godavari Tiger Prawns',
     category: 'seafood',
+    imageUri: require('../assets/images/listing_tiger_prawns.jpg'),
     description: 'Fresh tiger prawns from Kakinada coastal aquaculture. Zero preservatives, iced immediately after harvest. Cleaned and deveined on request. Morning catch — available till stock lasts.',
     price: 380,
     priceUnit: 'kg',
@@ -251,6 +256,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerRating: 4.6,
     produceName: 'Monthan Banana (Balekai)',
     category: 'fruits',
+    imageUri: require('../assets/images/listing_monthan_banana.jpg'),
     description: 'Thick Monthan (cooking) bananas from Kovvur. Best for bajji, kura, and chips. Not sweet — starchy, firm. Naturally ripened, no ethylene gas. Ideal for frying and curries.',
     price: 40,
     priceUnit: 'dozen',

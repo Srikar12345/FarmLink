@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -128,16 +129,38 @@ export default function ListingDetail() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottomPad + 120 }}
       >
-        <View style={[styles.hero, { backgroundColor: iconColor + '15', paddingTop: topPad + 16 }]}>
-          <TouchableOpacity
-            style={[styles.backBtn, { backgroundColor: colors.card }]}
-            onPress={() => router.back()}
-          >
-            <Feather name="arrow-left" size={20} color={colors.foreground} />
-          </TouchableOpacity>
-          <View style={[styles.heroIcon, { backgroundColor: iconColor + '25' }]}>
-            <MaterialCommunityIcons name={CATEGORY_ICONS[listing.category]} size={72} color={iconColor} />
-          </View>
+        <View style={styles.hero}>
+          {listing.imageUri ? (
+            <View style={styles.heroImageWrapper}>
+              <Image
+                source={typeof listing.imageUri === 'string' ? { uri: listing.imageUri } : listing.imageUri as number}
+                style={styles.heroImage}
+                resizeMode="cover"
+              />
+              <View style={[styles.heroImageOverlay, { paddingTop: topPad + 12 }]}>
+                <TouchableOpacity
+                  style={styles.backBtn}
+                  onPress={() => router.back()}
+                >
+                  <Feather name="arrow-left" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <>
+              <View style={{ paddingTop: topPad + 16, paddingHorizontal: 20, paddingBottom: 24 }}>
+                <TouchableOpacity
+                  style={[styles.backBtn, { backgroundColor: colors.card }]}
+                  onPress={() => router.back()}
+                >
+                  <Feather name="arrow-left" size={20} color={colors.foreground} />
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.heroIcon, { backgroundColor: iconColor + '25' }]}>
+                <MaterialCommunityIcons name={CATEGORY_ICONS[listing.category]} size={72} color={iconColor} />
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.body}>
@@ -430,7 +453,23 @@ export default function ListingDetail() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  hero: { paddingBottom: 24, paddingHorizontal: 20, alignItems: 'center' },
+  hero: {},
+  heroImageWrapper: {
+    width: '100%',
+    height: 260,
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: 260,
+  },
+  heroImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
   backBtn: {
     alignSelf: 'flex-start',
     width: 40,
@@ -438,12 +477,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    backgroundColor: 'rgba(0,0,0,0.35)',
     shadowColor: '#000',
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   heroIcon: { width: 120, height: 120, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
   body: { padding: 20, gap: 16 },
