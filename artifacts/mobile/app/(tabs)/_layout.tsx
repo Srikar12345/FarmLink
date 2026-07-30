@@ -15,9 +15,9 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'storefront', selected: 'storefront.fill' }} />
         <Label>Browse</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="search">
-        <Icon sf={{ default: 'magnifyingglass', selected: 'magnifyingglass' }} />
-        <Label>Discover</Label>
+      <NativeTabs.Trigger name="b2b">
+        <Icon sf={{ default: 'building.2', selected: 'building.2.fill' }} />
+        <Label>Business</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="requests">
         <Icon sf={{ default: 'text.badge.plus', selected: 'text.badge.plus' }} />
@@ -81,15 +81,21 @@ function ClassicTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="b2b"
         options={{
-          title: 'Discover',
+          title: 'Business',
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="magnifyingglass" tintColor={color} size={24} />
+              <SymbolView name="building.2" tintColor={color} size={24} />
             ) : (
-              <MaterialCommunityIcons name="magnify" size={24} color={color} />
+              <MaterialCommunityIcons name="storefront-outline" size={24} color={color} />
             ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen

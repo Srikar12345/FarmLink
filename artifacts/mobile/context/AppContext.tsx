@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiPost } from '@/utils/api';
 
-export type UserRole = 'farmer' | 'consumer' | 'rider';
+export type UserRole = 'farmer' | 'consumer' | 'rider' | 'business';
 export type OrderStatus = 'pending' | 'picked_up' | 'delivered' | 'cancelled';
 export type ProduceCategory = 'vegetables' | 'fruits' | 'grains' | 'dairy' | 'herbs' | 'seafood' | 'meat' | 'other';
 export type VehicleType = 'bike' | 'auto' | 'cab';

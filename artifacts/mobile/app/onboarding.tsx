@@ -24,23 +24,30 @@ type Step = 'role' | 'profile';
 
 const ROLES: { role: UserRole; title: string; description: string; icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }[] = [
   {
+    role: 'consumer',
+    title: 'Home Buyer',
+    description: 'Buy farm-fresh produce directly — pick up from your apartment machine or get home delivery',
+    icon: 'home-outline',
+    color: '#2563EB',
+  },
+  {
+    role: 'business',
+    title: 'Business / B2B',
+    description: 'Restaurant, canteen, hotel or kirana — order wholesale at farm-gate prices, 0% commission',
+    icon: 'storefront-outline',
+    color: '#0891B2',
+  },
+  {
     role: 'farmer',
     title: 'Farmer',
-    description: 'List your fresh produce directly and connect with buyers near you',
+    description: 'List your fresh produce directly, get paid instantly — 100% of every sale is yours',
     icon: 'tractor',
     color: '#1B8A3C',
   },
   {
-    role: 'consumer',
-    title: 'Consumer',
-    description: 'Buy fresh farm produce directly — no middlemen, no markups',
-    icon: 'shopping-outline',
-    color: '#2563EB',
-  },
-  {
     role: 'rider',
-    title: 'Delivery Rider',
-    description: 'Pick up and deliver fresh orders with your own vehicle, earn per trip',
+    title: 'Delivery Partner',
+    description: 'Earn on your own schedule — fill your daily earning goal, not idle waiting for orders',
     icon: 'motorbike',
     color: '#7C3AED',
   },
@@ -90,7 +97,7 @@ export default function Onboarding() {
     });
     if (selectedRole === 'farmer') router.replace('/(farmer)' as any);
     else if (selectedRole === 'rider') router.replace('/(rider)' as any);
-    else router.replace('/(tabs)' as any);
+    else router.replace('/(tabs)' as any); // consumer + business both go to consumer tabs
     setLoading(false);
   };
 
@@ -111,7 +118,7 @@ export default function Onboarding() {
           <Image source={farmLinkLogo} style={styles.logoImg} contentFit="contain" />
           <Text style={[styles.brand, { color: colors.foreground }]}>FarmLink</Text>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
-            Farm to your door, fresh and fair
+            Farm Fresh. Zero Commission. Farmer First.
           </Text>
         </View>
 
