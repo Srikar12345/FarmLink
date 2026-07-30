@@ -5,7 +5,6 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { type Listing, type ProduceCategory } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
-import { FreshnessTag } from './FreshnessTag';
 
 const CATEGORY_ICONS: Record<ProduceCategory, keyof typeof MaterialCommunityIcons.glyphMap> = {
   vegetables: 'carrot',
@@ -18,9 +17,20 @@ const CATEGORY_ICONS: Record<ProduceCategory, keyof typeof MaterialCommunityIcon
   other: 'basket',
 };
 
-const CATEGORY_COLORS: Record<ProduceCategory, string> = {
+const CATEGORY_BG: Record<ProduceCategory, string> = {
+  vegetables: '#DCFCE7',
+  fruits: '#FFEDD5',
+  grains: '#FEF3C7',
+  dairy: '#DBEAFE',
+  herbs: '#EDE9FE',
+  seafood: '#CFFAFE',
+  meat: '#FEE2E2',
+  other: '#F3F4F6',
+};
+
+const CATEGORY_COLOR: Record<ProduceCategory, string> = {
   vegetables: '#16A34A',
-  fruits: '#DC2626',
+  fruits: '#EA580C',
   grains: '#B45309',
   dairy: '#2563EB',
   herbs: '#7C3AED',
@@ -29,78 +39,61 @@ const CATEGORY_COLORS: Record<ProduceCategory, string> = {
   other: '#6B7280',
 };
 
-const RETAIL_SAVINGS: Record<ProduceCategory, number> = {
-  vegetables: 30,
-  fruits: 25,
-  grains: 20,
-  dairy: 15,
-  herbs: 40,
-  seafood: 35,
-  meat: 25,
-  other: 20,
-};
-
-interface ListingCardProps {
-  listing: Listing;
+function freshnessLabel(harvestTime: string) {
+  const hours = Math.floor((Date.now() - new Date(harvestTime).getTime()) / 3600000);
+  if (hours < 1) return { text: 'Just harvested', bg: '#16A34A' };
+  if (hours < 12) return { text: `${hours}h fresh`, bg: '#16A34A' };
+  if (hours < 24) return { text: `${hours}h ago`, bg: '#D97706' };
+  const d = Math.floor(hours / 24);
+  return { text: `${d}d ago`, bg: d < 3 ? '#D97706' : '#9CA3AF' };
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+interface Props { listing: Listing }
+
+export function ListingCard({ listing }: Props) {
   const colors = useColors();
-  const iconColor = CATEGORY_COLORS[listing.category];
-  const savingsPct = RETAIL_SAVINGS[listing.category];
+  const accent = CATEGORY_COLOR[listing.category];
+  const fresh = freshnessLabel(listing.harvestTime);
+  const displayName = listing.shortName ?? listing.produceName;
 
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-      activeOpacity={0.75}
+      activeOpacity={0.78}
       onPress={() => router.push(`/listing/${listing.id}`)}
     >
-      {listing.imageUri ? (
-        <Image source={typeof listing.imageUri === 'string' ? { uri: listing.imageUri } : listing.imageUri} style={styles.thumbnail} resizeMode="cover" />
-      ) : (
-        <View style={[styles.iconBox, { backgroundColor: iconColor + '18' }]}>
-          <MaterialCommunityIcons name={CATEGORY_ICONS[listing.category]} size={36} color={iconColor} />
+      {/* Image area */}
+      <View style={[styles.imgBox, { backgroundColor: CATEGORY_BG[listing.category] }]}>
+        {listing.imageUri ? (
+          <Image
+            source={typeof listing.imageUri === 'string' ? { uri: listing.imageUri } : listing.imageUri as number}
+            style={styles.img}
+            resizeMode="cover"
+          />
+        ) : (
+          <MaterialCommunityIcons name={CATEGORY_ICONS[listing.category]} size={52} color={accent} />
+        )}
+        <View style={[styles.freshBadge, { backgroundColor: fresh.bg }]}>
+          <Text style={styles.freshText}>{fresh.text}</Text>
         </View>
-      )}
+      </View>
 
-      <View style={styles.content}>
-        <View style={styles.topRow}>
-          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
-            {listing.produceName}
-          </Text>
-          <Text style={[styles.price, { color: colors.primary }]}>
-            ₹{listing.price}
-            <Text style={[styles.unit, { color: colors.mutedForeground }]}>/{listing.priceUnit}</Text>
-          </Text>
-        </View>
-
-        <Text style={[styles.farmer, { color: colors.mutedForeground }]} numberOfLines={1}>
-          {listing.farmerName} · {listing.farmerLocation}
+      {/* Info */}
+      <View style={styles.info}>
+        <Text style={[styles.qtyText, { color: colors.mutedForeground }]} numberOfLines={1}>
+          {listing.quantity} {listing.quantityUnit}
         </Text>
-
-        <View style={styles.tagsRow}>
-          <FreshnessTag harvestTime={listing.harvestTime} />
-          <View style={[styles.deliveryChip, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-            <MaterialCommunityIcons name="lightning-bolt" size={10} color={colors.primary} />
-            <Text style={[styles.deliveryText, { color: colors.primary }]}>~45 min</Text>
+        <Text style={[styles.nameText, { color: colors.foreground }]} numberOfLines={2}>
+          {displayName}
+        </Text>
+        <View style={styles.priceRow}>
+          <View>
+            <Text style={[styles.priceText, { color: colors.primary }]}>₹{listing.price}</Text>
+            <Text style={[styles.unitText, { color: colors.mutedForeground }]}>/{listing.priceUnit}</Text>
           </View>
-          <View style={[styles.savingsChip, { backgroundColor: '#16A34A10', borderColor: '#16A34A30' }]}>
-            <Text style={[styles.savingsText, { color: '#16A34A' }]}>~{savingsPct}% below retail</Text>
+          <View style={[styles.addBtn, { backgroundColor: colors.primary }]}>
+            <MaterialCommunityIcons name="plus" size={16} color="#fff" />
           </View>
-        </View>
-
-        <View style={styles.bottomRow}>
-          <Text style={[styles.qty, { color: colors.mutedForeground }]}>
-            {listing.quantity} {listing.quantityUnit} left
-          </Text>
-          {listing.totalReviews > 0 && (
-            <View style={styles.ratingRow}>
-              <MaterialCommunityIcons name="star" size={12} color={colors.starColor} />
-              <Text style={[styles.rating, { color: colors.mutedForeground }]}>
-                {listing.rating.toFixed(1)}
-              </Text>
-            </View>
-          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -109,100 +102,53 @@ export function ListingCard({ listing }: ListingCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
+    flex: 1,
     borderRadius: 16,
     borderWidth: 1,
-    padding: 14,
-    marginBottom: 12,
-    alignItems: 'flex-start',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 8,
+    elevation: 3,
   },
-  thumbnail: {
-    width: 72,
-    height: 72,
-    borderRadius: 14,
-    marginRight: 14,
-    flexShrink: 0,
-  },
-  iconBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 14,
+  imgBox: {
+    width: '100%',
+    height: 140,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
-    flexShrink: 0,
+    position: 'relative',
   },
-  content: {
-    flex: 1,
-    gap: 5,
+  img: {
+    position: 'absolute',
+    top: 0, left: 0,
+    width: '100%', height: '100%',
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  name: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    flex: 1,
-    marginRight: 8,
-  },
-  price: {
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-  },
-  unit: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-  farmer: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 5,
-    alignItems: 'center',
-  },
-  deliveryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
+  freshBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
     paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 20,
   },
-  deliveryText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
-  savingsChip: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  savingsText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
-  bottomRow: {
+  freshText: { fontSize: 10, fontFamily: 'Inter_600SemiBold', color: '#fff' },
+  info: { padding: 10, gap: 3 },
+  qtyText: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  nameText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', lineHeight: 18 },
+  priceRow: {
     flexDirection: 'row',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  priceText: { fontSize: 16, fontFamily: 'Inter_700Bold' },
+  unitText: { fontSize: 10, fontFamily: 'Inter_400Regular' },
+  addBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
-  },
-  qty: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  rating: {
-    fontSize: 11,
-    fontFamily: 'Inter_500Medium',
+    justifyContent: 'center',
   },
 });

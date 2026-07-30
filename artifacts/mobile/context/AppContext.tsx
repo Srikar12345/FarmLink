@@ -51,6 +51,7 @@ export interface User {
 }
 
 export interface Listing {
+  shortName?: string;
   id: string;
   farmerId: string;
   farmerName: string;
@@ -136,6 +137,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 98765 43210',
     farmerRating: 4.8,
     produceName: 'Sona Masuri Raw Rice',
+    shortName: 'Sona Masuri Rice',
     category: 'grains',
     imageUri: require('../assets/images/listing_sona_masuri_rice.jpg'),
     description: 'GI-tagged Sona Masuri from Razole mandal. Medium-grain, low-starch. Milled fresh at Rajam Rice Mill, Kakinada Road. Chemical-free paddy cultivation. Ideal for daily cooking, light on stomach.',
@@ -160,6 +162,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 87654 32109',
     farmerRating: 4.9,
     produceName: 'BPT 5204 Boiled Rice',
+    shortName: 'BPT Boiled Rice',
     category: 'grains',
     imageUri: require('../assets/images/listing_bpt_boiled_rice.jpg'),
     description: 'Traditional BPT Samba boiled rice from Amalapuram. Parboiled for better nutrition. Mild aroma, firm texture. Milled and sorted at regulated mill. Preferred for andhra meals and biryani base.',
@@ -184,6 +187,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 76543 21098',
     farmerRating: 4.7,
     produceName: 'Raw Turmeric Fingers',
+    shortName: 'Turmeric Fingers',
     category: 'herbs',
     imageUri: require('../assets/images/listing_raw_turmeric.jpg'),
     description: 'Freshly harvested turmeric rhizomes from Rajam. Deep orange inside — high curcumin content. Can be consumed raw, dried, or juiced. Naturally grown without any chemical fertiliser.',
@@ -208,6 +212,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 65432 10987',
     farmerRating: 4.9,
     produceName: 'Fresh Tender Coconuts',
+    shortName: 'Tender Coconuts',
     category: 'fruits',
     imageUri: require('../assets/images/listing_tender_coconuts.jpg'),
     description: 'Sweet tender coconuts from Kakinada coastal belt. Thick malai, sweet water. Picked this morning from 15-year-old palms. Order 6+ for bulk pricing. No preservatives, naturally fresh.',
@@ -232,6 +237,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 54321 09876',
     farmerRating: 4.8,
     produceName: 'Godavari Tiger Prawns',
+    shortName: 'Tiger Prawns',
     category: 'seafood',
     imageUri: require('../assets/images/listing_tiger_prawns.jpg'),
     description: 'Fresh tiger prawns from Kakinada coastal aquaculture. Zero preservatives, iced immediately after harvest. Cleaned and deveined on request. Morning catch — available till stock lasts.',
@@ -256,6 +262,7 @@ const SEED_LISTINGS: Listing[] = [
     farmerPhone: '+91 43210 98765',
     farmerRating: 4.6,
     produceName: 'Monthan Banana (Balekai)',
+    shortName: 'Monthan Banana',
     category: 'fruits',
     imageUri: require('../assets/images/listing_monthan_banana.jpg'),
     description: 'Thick Monthan (cooking) bananas from Kovvur. Best for bajji, kura, and chips. Not sweet — starchy, firm. Naturally ripened, no ethylene gas. Ideal for frying and curries.',
