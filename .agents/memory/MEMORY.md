@@ -1,0 +1,2 @@
+- [FarmLink business model pivot](farmlink-model.md) — Namma Yatri model: zero-commission, vending machines at apartments, B2B, farmer direct pay.
+- [FarmLink app architecture](farmlink-arch.md) — Key decisions: AsyncStorage-first, UPI deep-link, event bus for toasts, imageUri: number|string.
