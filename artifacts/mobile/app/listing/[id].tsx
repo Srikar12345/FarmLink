@@ -48,11 +48,12 @@ export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { listings, currentUser, createOrder, requestPackagingReturn, getUserOrders } = useApp();
+  const { listings, currentUser, createOrder, requestPackagingReturn, getUserOrders, machines } = useApp();
   const listing = listings.find((l) => l.id === id);
 
   const [quantity, setQuantity] = useState(1);
   const [showPayment, setShowPayment] = useState(false);
+  const [fulfilment, setFulfilment] = useState<'machine_pickup' | 'home_delivery'>('machine_pickup');
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -71,10 +72,11 @@ export default function ListingDetail() {
   const packagingDeposit = listing.packagingDeposit ?? 0;
   const total = listing.price * quantity;
   const hasFarmPass = currentUser?.hasFarmPass ?? false;
-  const deliveryFee = hasFarmPass ? 0 : Math.max(20, Math.round(total * 0.1));
+  const deliveryFee = fulfilment === 'machine_pickup' ? 0 : hasFarmPass ? 0 : Math.max(20, Math.round(total * 0.1));
   const grandTotal = total + deliveryFee + packagingDeposit;
   const netCost = total + deliveryFee; // cost without refundable deposit
-  const isConsumer = currentUser?.role === 'consumer';
+  const isConsumer = currentUser?.role === 'consumer' || currentUser?.role === 'business';
+  const nearbyMachine = machines.find((machine) => machine.status !== 'restocking' && machine.batches.some((batch) => batch.listingId === listing.id && batch.quantity >= quantity));
 
   const savedAddress = currentUser?.savedAddress;
 
@@ -85,7 +87,7 @@ export default function ListingDetail() {
   const latestDeliveredOrder = myDeliveredOrders[0];
 
   const handleOrder = () => {
-    if (!savedAddress) {
+    if (fulfilment === 'home_delivery' && !savedAddress) {
       Alert.alert(
         'Delivery Address Required',
         'Please add your delivery address before placing an order.',
@@ -105,8 +107,10 @@ export default function ListingDetail() {
     if (!savedAddress) return;
     const order = createOrder({
       listingId: listing.id,
-      consumerAddress: savedAddress.fullAddress,
+      consumerAddress: fulfilment === 'machine_pickup' ? `${nearbyMachine?.apartment ?? 'Nearby FarmLink Station'} · self pickup` : savedAddress?.fullAddress ?? '',
       quantity,
+      fulfilmentType: fulfilment,
+      machineId: fulfilment === 'machine_pickup' ? nearbyMachine?.id : undefined,
     });
     if (order) {
       const depositMsg = packagingDeposit > 0
@@ -114,7 +118,9 @@ export default function ListingDetail() {
         : '';
       Alert.alert(
         '🎉 Order Placed!',
-        `Your order for ${listing.produceName} is confirmed. A rider will pick it up soon.${depositMsg}`,
+        fulfilment === 'machine_pickup'
+          ? `Your order for ${listing.produceName} is confirmed at ${nearbyMachine?.apartment ?? 'your nearby FarmLink Station'}. Show your order at the machine and collect it fresh.${depositMsg}`
+          : `Your order for ${listing.produceName} is confirmed. The best available delivery partner will pick it up soon.${depositMsg}`,
         [
           { text: 'View Orders', onPress: () => router.replace('/(tabs)/orders') },
           { text: 'OK', onPress: () => router.back() },
@@ -284,7 +290,37 @@ export default function ListingDetail() {
                 </View>
               </View>
 
-              {/* Delivery Address */}
+               {/* Smart fulfilment — machine first, delivery when it helps */}
+               <View style={styles.fulfilmentSection}>
+                 <Text style={[styles.qtyLabel, { color: colors.mutedForeground }]}>How would you like it?</Text>
+                 <View style={styles.fulfilmentRow}>
+                   <TouchableOpacity
+                     style={[styles.fulfilmentOption, { backgroundColor: fulfilment === 'machine_pickup' ? colors.freshGreenBg : colors.card, borderColor: fulfilment === 'machine_pickup' ? colors.freshGreen : colors.border, opacity: nearbyMachine ? 1 : 0.45 }]}
+                     disabled={!nearbyMachine}
+                     onPress={() => setFulfilment('machine_pickup')}
+                   >
+                     <Text style={styles.fulfilmentEmoji}>🏧</Text>
+                     <View style={{ flex: 1 }}>
+                       <Text style={[styles.fulfilmentTitle, { color: colors.foreground }]}>{nearbyMachine ? 'Pick up fresh' : 'Not stocked nearby'}</Text>
+                       <Text style={[styles.fulfilmentSub, { color: colors.mutedForeground }]}>{nearbyMachine ? `${nearbyMachine.apartment} · ₹0 delivery` : 'Choose home delivery'}</Text>
+                     </View>
+                   </TouchableOpacity>
+                   <TouchableOpacity
+                     style={[styles.fulfilmentOption, { backgroundColor: fulfilment === 'home_delivery' ? colors.secondary : colors.card, borderColor: fulfilment === 'home_delivery' ? colors.primary : colors.border }]}
+                     onPress={() => setFulfilment('home_delivery')}
+                   >
+                     <Text style={styles.fulfilmentEmoji}>🛵</Text>
+                     <View style={{ flex: 1 }}>
+                       <Text style={[styles.fulfilmentTitle, { color: colors.foreground }]}>Home delivery</Text>
+                       <Text style={[styles.fulfilmentSub, { color: colors.mutedForeground }]}>Smart human / robot routing</Text>
+                     </View>
+                   </TouchableOpacity>
+                 </View>
+               </View>
+
+               {/* Delivery Address */}
+               {fulfilment === 'home_delivery' && (
+               <>
               {savedAddress ? (
                 <View style={[styles.addressBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.addressLeft}>
@@ -316,6 +352,8 @@ export default function ListingDetail() {
                   <MaterialCommunityIcons name="chevron-right" size={18} color={colors.primary} />
                 </TouchableOpacity>
               )}
+               </>
+               )}
 
               {/* Price Summary */}
               <View style={[styles.summary, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
@@ -329,28 +367,28 @@ export default function ListingDetail() {
                 {/* Delivery fee row with FarmPass */}
                 <View style={styles.summaryRow}>
                   <View style={{ flex: 1, gap: 3 }}>
-                    <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Delivery fee</Text>
-                    {!hasFarmPass && (
+                     <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>{fulfilment === 'machine_pickup' ? 'Machine pickup' : 'Delivery fee'}</Text>
+                     {fulfilment === 'home_delivery' && !hasFarmPass && (
                       <TouchableOpacity onPress={() => router.push('/farmpass')} activeOpacity={0.7}>
                         <Text style={[styles.farmPassNudge, { color: colors.freshGreen }]}>
                           🌿 ₹0 with FarmPass — Save ₹{deliveryFee}/order →
                         </Text>
                       </TouchableOpacity>
                     )}
-                    {hasFarmPass && (
+                     {fulfilment === 'home_delivery' && hasFarmPass && (
                       <Text style={[styles.farmPassActive, { color: colors.freshGreen }]}>
                         🌿 FarmPass active — free delivery!
                       </Text>
                     )}
                   </View>
                   <Text style={[styles.summaryValue, {
-                    color: hasFarmPass ? colors.freshGreen : colors.foreground,
-                    textDecorationLine: hasFarmPass ? 'line-through' : 'none',
+                     color: deliveryFee === 0 ? colors.freshGreen : colors.foreground,
+                     textDecorationLine: fulfilment === 'home_delivery' && hasFarmPass ? 'line-through' : 'none',
                   }]}>
-                    {hasFarmPass ? `₹${Math.max(20, Math.round(total * 0.1))}` : `₹${deliveryFee}`}
+                     {fulfilment === 'machine_pickup' ? 'FREE' : hasFarmPass ? `₹${Math.max(20, Math.round(total * 0.1))}` : `₹${deliveryFee}`}
                   </Text>
                 </View>
-                {hasFarmPass && (
+                 {fulfilment === 'home_delivery' && hasFarmPass && (
                   <View style={styles.summaryRow}>
                     <Text style={[styles.summaryLabel, { color: colors.freshGreen }]}>Delivery (FarmPass)</Text>
                     <Text style={[styles.summaryValue, { color: colors.freshGreen }]}>FREE</Text>
@@ -422,17 +460,17 @@ export default function ListingDetail() {
           ]}
         >
           <TouchableOpacity
-            style={[styles.orderBtn, { backgroundColor: savedAddress ? '#072654' : colors.muted }]}
+             style={[styles.orderBtn, { backgroundColor: (fulfilment === 'machine_pickup' || savedAddress) ? '#072654' : colors.muted }]}
             onPress={handleOrder}
             activeOpacity={0.85}
           >
-            {savedAddress && (
+             {(fulfilment === 'machine_pickup' || savedAddress) && (
               <View style={styles.rzpBtnIcon}>
                 <Text style={styles.rzpBtnIconText}>R</Text>
               </View>
             )}
             <Text style={[styles.orderBtnText, { color: savedAddress ? '#fff' : colors.mutedForeground }]}>
-              {savedAddress ? `Pay ₹${grandTotal} with Razorpay` : 'Add Address to Order'}
+               {fulfilment === 'machine_pickup' ? `Pay ₹${grandTotal} · Pick up fresh` : savedAddress ? `Pay ₹${grandTotal} · Home delivery` : 'Add Address to Order'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -537,6 +575,12 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   infoDivider: { width: 1, marginVertical: 4 },
   orderSection: { gap: 14 },
+   fulfilmentSection: { gap: 8 },
+   fulfilmentRow: { gap: 8 },
+   fulfilmentOption: { flexDirection: 'row', alignItems: 'center', gap: 9, borderWidth: 1, borderRadius: 12, padding: 11 },
+   fulfilmentEmoji: { fontSize: 21 },
+   fulfilmentTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+   fulfilmentSub: { fontSize: 10, fontFamily: 'Inter_400Regular', marginTop: 2 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   qtyLabel: { fontSize: 14, fontFamily: 'Inter_500Medium' },
   qtyControls: { flexDirection: 'row', alignItems: 'center', gap: 16 },

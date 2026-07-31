@@ -74,7 +74,7 @@ function MyListingCard({ listing }: { listing: Listing }) {
 export default function FarmerHome() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { currentUser, getFarmerListings, getFarmerOrders, logout, updateRole } = useApp();
+  const { currentUser, getFarmerListings, getFarmerOrders, logout, updateRole, machines, restockMachine, getFarmerPayouts } = useApp();
 
   const handleLogout = async () => {
     await logout();
@@ -113,6 +113,7 @@ export default function FarmerHome() {
       return o.status === 'delivered' && d.getMonth() === now.getMonth();
     })
     .reduce((s, o) => s + o.totalPrice, 0);
+  const payout = getFarmerPayouts();
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -180,6 +181,38 @@ export default function FarmerHome() {
                   <Text style={styles.zeroStatVal}>₹{thisMonthRevenue > 0 ? thisMonthRevenue.toLocaleString('en-IN') : '0'}</Text>
                   <Text style={styles.zeroStatLabel}>This month</Text>
                 </View>
+              </View>
+            </View>
+
+            <View style={[styles.directPayCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.directPayTop}>
+                <View style={styles.directPayTitleRow}>
+                  <MaterialCommunityIcons name="bank-transfer-in" size={19} color={colors.freshGreen} />
+                  <Text style={[styles.directPayTitle, { color: colors.foreground }]}>Direct farmer payment ledger</Text>
+                </View>
+                <View style={[styles.zeroPill, { backgroundColor: colors.freshGreenBg }]}><Text style={[styles.zeroPillText, { color: colors.freshGreen }]}>0% platform fee</Text></View>
+              </View>
+              <Text style={[styles.directPayAmount, { color: colors.freshGreen }]}>₹{payout.gross.toLocaleString('en-IN')}</Text>
+              <Text style={[styles.directPaySub, { color: colors.mutedForeground }]}>of produce value paid to you directly · {payout.orders} completed order{payout.orders === 1 ? '' : 's'}</Text>
+              <View style={[styles.paymentLine, { borderColor: colors.border }]}>
+                <Text style={[styles.paymentLineText, { color: colors.mutedForeground }]}>Customer payment → Farmer payout</Text>
+                <Text style={[styles.paymentLineValue, { color: colors.foreground }]}>100% → you</Text>
+              </View>
+            </View>
+
+            <View style={[styles.restockCard, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.restockTitle}>🏧 Fresh Station operations</Text>
+                <Text style={styles.restockSub}>Complete a hygiene check before every smart restock. Low stock is prioritised using demand and shelf-life.</Text>
+              </View>
+              <View style={{ gap: 6 }}>
+                {machines.filter((machine) => machine.status === 'low').length === 0 ? (
+                  <Text style={styles.restockOk}>All stocked</Text>
+                ) : machines.filter((machine) => machine.status === 'low').map((machine) => (
+                  <TouchableOpacity key={machine.id} style={styles.restockAction} onPress={() => restockMachine(machine.id)}>
+                    <Text style={styles.restockActionText}>Restock {machine.name}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
@@ -293,6 +326,23 @@ const styles = StyleSheet.create({
   zeroStatVal: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#BBF7D0' },
   zeroStatLabel: { fontSize: 9, fontFamily: 'Inter_400Regular', color: '#86EFAC', textAlign: 'center' },
   zeroStatDivider: { width: 1, backgroundColor: '#166534', marginVertical: 2 },
+  directPayCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 6 },
+  directPayTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  directPayTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  directPayTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  zeroPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 16 },
+  zeroPillText: { fontSize: 10, fontFamily: 'Inter_700Bold' },
+  directPayAmount: { fontSize: 24, fontFamily: 'Inter_700Bold' },
+  directPaySub: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  paymentLine: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, paddingTop: 9, marginTop: 3 },
+  paymentLineText: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  paymentLineValue: { fontSize: 11, fontFamily: 'Inter_700Bold' },
+  restockCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 15, borderWidth: 1, padding: 13 },
+  restockTitle: { color: '#1E3A8A', fontSize: 13, fontFamily: 'Inter_700Bold' },
+  restockSub: { color: '#1D4ED8', fontSize: 10, lineHeight: 15, fontFamily: 'Inter_400Regular', marginTop: 3 },
+  restockOk: { color: '#166534', fontSize: 11, fontFamily: 'Inter_700Bold' },
+  restockAction: { backgroundColor: '#2563EB', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  restockActionText: { color: '#fff', fontSize: 10, fontFamily: 'Inter_700Bold' },
 
   statsRow: { flexDirection: 'row', gap: 10 },
   statCard: { flex: 1, borderRadius: 14, borderWidth: 1, padding: 14, alignItems: 'center', gap: 4 },

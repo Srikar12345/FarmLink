@@ -2,6 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Linking,
   Platform,
@@ -164,7 +165,7 @@ function DeliveryCard({
 export default function RiderDeliveries() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { getAvailableOrders, getActiveRiderOrder, acceptOrder, updateOrderStatus, currentUser, orders } =
+  const { getAvailableOrders, getActiveRiderOrder, acceptOrder, updateOrderStatus, currentUser, orders, setDailyEarningGoal } =
     useApp();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -213,7 +214,7 @@ export default function RiderDeliveries() {
     setRefreshing(false);
   };
 
-  // Monthly earnings
+  // Earnings and daily-goal optimisation
   const now = new Date();
   const myDeliveries = orders.filter(
     (o) =>
@@ -225,6 +226,24 @@ export default function RiderDeliveries() {
     (s, o) => s + Math.max(40, Math.round(o.totalPrice * 0.12)),
     0,
   );
+  const todayKey = new Date().toDateString();
+  const todayEarned = orders
+    .filter((o) => o.riderId === currentUser?.id && o.status === 'delivered' && new Date(o.updatedAt).toDateString() === todayKey)
+    .reduce((sum, order) => sum + Math.max(40, Math.round(order.totalPrice * 0.12)), 0);
+  const goal = currentUser?.dailyEarningGoal ?? 500;
+  const remaining = Math.max(0, goal - todayEarned);
+  const bestNext = [...available].sort((a, b) => b.totalPrice - a.totalPrice)[0];
+  const bestEarning = bestNext ? Math.max(40, Math.round(bestNext.totalPrice * 0.12)) : 0;
+  const tripsLeft = remaining === 0 ? 0 : Math.ceil(remaining / Math.max(bestEarning, 40));
+
+  const chooseGoal = () => {
+    Alert.alert('Set daily earning goal', 'FarmLink uses this to recommend efficient next deliveries.', [
+      { text: '₹500', onPress: () => setDailyEarningGoal(500) },
+      { text: '₹750', onPress: () => setDailyEarningGoal(750) },
+      { text: '₹1,000', onPress: () => setDailyEarningGoal(1000) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   const pendingCash = Math.max(40, Math.round((completingOrder?.totalPrice ?? 0) * 0.12));
   const pendingCredit = Math.round(pendingCash * 1.15);
@@ -274,6 +293,33 @@ export default function RiderDeliveries() {
                 </View>
               </View>
             )}
+
+            <TouchableOpacity
+              style={[styles.goalCard, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}
+              onPress={chooseGoal}
+              activeOpacity={0.85}
+            >
+              <View style={styles.goalHeader}>
+                <View style={styles.goalTitleRow}>
+                  <MaterialCommunityIcons name="target" size={19} color="#7C3AED" />
+                  <Text style={styles.goalTitle}>Today’s earning goal</Text>
+                </View>
+                <Text style={styles.editGoal}>Edit</Text>
+              </View>
+              <View style={styles.goalNumbers}>
+                <Text style={styles.goalValue}>₹{todayEarned}</Text>
+                <Text style={styles.goalOf}>of ₹{goal}</Text>
+                <Text style={styles.goalStatus}>{remaining === 0 ? 'Goal reached!' : `₹${remaining} to go`}</Text>
+              </View>
+              <View style={styles.goalTrack}>
+                <View style={[styles.goalFill, { width: `${Math.min(100, Math.round((todayEarned / goal) * 100))}%` }]} />
+              </View>
+              {remaining > 0 && (
+                <Text style={styles.goalHint}>
+                  {bestNext ? `Best next: ${bestNext.produceName} · earn ₹${bestEarning} · about ${tripsLeft} efficient trip${tripsLeft === 1 ? '' : 's'} left` : 'We’ll recommend the next efficient order as soon as it arrives.'}
+                </Text>
+              )}
+            </TouchableOpacity>
 
             {active && (
               <View style={[styles.activeBanner, { backgroundColor: colors.riderColor + '12', borderColor: colors.riderColor + '40' }]}>
@@ -368,6 +414,18 @@ const styles = StyleSheet.create({
   earningsCardLabel: { fontSize: 11, fontFamily: 'Inter_500Medium' },
   earningsCardValue: { fontSize: 30, fontFamily: 'Inter_700Bold' },
   earningsCardSub: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  goalCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 8 },
+  goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  goalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  goalTitle: { color: '#5B21B6', fontSize: 13, fontFamily: 'Inter_700Bold' },
+  editGoal: { color: '#7C3AED', fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  goalNumbers: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
+  goalValue: { color: '#4C1D95', fontSize: 27, fontFamily: 'Inter_700Bold' },
+  goalOf: { color: '#7C3AED', fontSize: 13, fontFamily: 'Inter_400Regular' },
+  goalStatus: { color: '#16A34A', fontSize: 11, fontFamily: 'Inter_700Bold', marginLeft: 'auto' },
+  goalTrack: { height: 7, backgroundColor: '#DDD6FE', borderRadius: 9, overflow: 'hidden' },
+  goalFill: { height: 7, backgroundColor: '#7C3AED', borderRadius: 9 },
+  goalHint: { color: '#6B21A8', fontSize: 11, lineHeight: 16, fontFamily: 'Inter_400Regular' },
   creditHint: {
     alignItems: 'center',
     padding: 12,

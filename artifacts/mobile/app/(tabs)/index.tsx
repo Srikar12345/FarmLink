@@ -146,6 +146,31 @@ export default function ConsumerHome() {
           <View style={styles.listHeader}>
             <LiveFeedBanner />
 
+            <TouchableOpacity
+              style={[styles.machineHero, { backgroundColor: '#052E16' }]}
+              onPress={() => router.push('/machines' as any)}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.machineEmoji}>🏧</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.machineHeroTitle}>Fresh near you — 6–12h replenishment</Text>
+                <Text style={styles.machineHeroSub}>Hygiene-checked micro store · Pick up with ₹0 delivery fee</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color="#86EFAC" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.basketHero, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+              onPress={() => router.push('/baskets' as any)}
+              activeOpacity={0.88}
+            >
+              <Text style={{ fontSize: 25 }}>🥬</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.basketHeroTitle, { color: colors.foreground }]}>Freshness Plans</Text>
+                <Text style={[styles.basketHeroSub, { color: colors.mutedForeground }]}>Weekly baskets help us stock exactly what your building needs</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.primary} />
+            </TouchableOpacity>
+
             {/* FarmPass nudge */}
             {!currentUser?.hasFarmPass && (
               <TouchableOpacity
@@ -258,6 +283,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 10,
     padding: 13, borderRadius: 14, borderWidth: 1,
   },
+  machineHero: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16 },
+  machineEmoji: { fontSize: 28 },
+  machineHeroTitle: { color: '#F0FDF4', fontSize: 13, fontFamily: 'Inter_700Bold' },
+  machineHeroSub: { color: '#86EFAC', fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 3 },
+  basketHero: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, borderWidth: 1 },
+  basketHeroTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  basketHeroSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 3 },
   farmPassTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   farmPassSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },
 

@@ -48,6 +48,7 @@ export interface User {
   vehicleType?: VehicleType;
   savedAddress?: SavedAddress;
   hasFarmPass?: boolean;
+  dailyEarningGoal?: number;
 }
 
 export interface Listing {
@@ -102,9 +103,88 @@ export interface Order {
   riderName?: string;
   riderPhone?: string;
   vehicleType?: VehicleType;
+  fulfilmentType?: 'machine_pickup' | 'home_delivery';
+  machineId?: string;
+  farmerPayout?: number;
+  platformCommission?: number;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface MachineBatch {
+  id: string;
+  listingId: string;
+  produceName: string;
+  quantity: number;
+  capacity: number;
+  harvestTime: string;
+  packedAt: string;
+  expiresAt: string;
+  temperature: number;
+  temperatureOk: boolean;
+}
+
+export interface VendingMachine {
+  id: string;
+  name: string;
+  apartment: string;
+  area: string;
+  distance: string;
+  status: 'online' | 'low' | 'restocking';
+  nextRestockAt: string;
+  lastSanitisedAt: string;
+  hygieneScore: number;
+  solar: boolean;
+  temperatureControlled: boolean;
+  batches: MachineBatch[];
+}
+
+export interface FreshSubscription {
+  id: string;
+  name: string;
+  frequency: 'weekly' | 'monthly';
+  price: number;
+  nextDelivery: string;
+  status: 'active' | 'paused';
+}
+
+const SEED_MACHINES: VendingMachine[] = [
+  {
+    id: 'm1',
+    name: 'FL-001',
+    apartment: 'Sai Residency',
+    area: 'Kakinada Road, Block B Parking',
+    distance: '0.2 km',
+    status: 'online',
+    nextRestockAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+    lastSanitisedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    hygieneScore: 98,
+    solar: true,
+    temperatureControlled: true,
+    batches: [
+      { id: 'batch1', listingId: 'listing1', produceName: 'Sona Masuri Rice', quantity: 22, capacity: 30, harvestTime: new Date(Date.now() - 48 * 3600000).toISOString(), packedAt: new Date(Date.now() - 8 * 3600000).toISOString(), expiresAt: new Date(Date.now() + 20 * 86400000).toISOString(), temperature: 23, temperatureOk: true },
+      { id: 'batch2', listingId: 'listing4', produceName: 'Tender Coconuts', quantity: 12, capacity: 20, harvestTime: new Date(Date.now() - 5 * 3600000).toISOString(), packedAt: new Date(Date.now() - 3 * 3600000).toISOString(), expiresAt: new Date(Date.now() + 2 * 86400000).toISOString(), temperature: 11, temperatureOk: true },
+      { id: 'batch3', listingId: 'listing6', produceName: 'Monthan Banana', quantity: 16, capacity: 24, harvestTime: new Date(Date.now() - 8 * 3600000).toISOString(), packedAt: new Date(Date.now() - 5 * 3600000).toISOString(), expiresAt: new Date(Date.now() + 3 * 86400000).toISOString(), temperature: 14, temperatureOk: true },
+    ],
+  },
+  {
+    id: 'm2',
+    name: 'FL-002',
+    apartment: 'Vijaya Towers',
+    area: 'Rajahmundry Bypass, Lift Lobby',
+    distance: '0.5 km',
+    status: 'online',
+    nextRestockAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+    lastSanitisedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    hygieneScore: 96,
+    solar: true,
+    temperatureControlled: true,
+    batches: [
+      { id: 'batch4', listingId: 'listing5', produceName: 'Tiger Prawns', quantity: 8, capacity: 16, harvestTime: new Date(Date.now() - 9 * 3600000).toISOString(), packedAt: new Date(Date.now() - 4 * 3600000).toISOString(), expiresAt: new Date(Date.now() + 1 * 86400000).toISOString(), temperature: 3, temperatureOk: true },
+      { id: 'batch5', listingId: 'listing2', produceName: 'BPT Boiled Rice', quantity: 18, capacity: 30, harvestTime: new Date(Date.now() - 72 * 3600000).toISOString(), packedAt: new Date(Date.now() - 12 * 3600000).toISOString(), expiresAt: new Date(Date.now() + 20 * 86400000).toISOString(), temperature: 22, temperatureOk: true },
+    ],
+  },
+];
 
 export interface CropRequest {
   imageUri?: number | string;
@@ -407,9 +487,11 @@ interface AppContextType {
   listings: Listing[];
   orders: Order[];
   cropRequests: CropRequest[];
+  machines: VendingMachine[];
+  subscriptions: FreshSubscription[];
   setupUser: (user: Omit<User, 'id'>) => Promise<void>;
   addListing: (listing: Omit<Listing, 'id' | 'farmerId' | 'farmerName' | 'farmerLocation' | 'farmerPhone' | 'farmerRating' | 'rating' | 'totalReviews' | 'isAvailable'>) => void;
-  createOrder: (params: { listingId: string; consumerAddress: string; quantity: number }) => Order | null;
+  createOrder: (params: { listingId: string; consumerAddress: string; quantity: number; fulfilmentType?: 'machine_pickup' | 'home_delivery'; machineId?: string }) => Order | null;
   acceptOrder: (orderId: string) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
   updateRiderProfile: (updates: Partial<Pick<User, 'vehicleType' | 'idVerified' | 'idProofUri' | 'location'>>) => Promise<void>;
@@ -428,6 +510,11 @@ interface AppContextType {
   saveAddress: (addr: SavedAddress) => Promise<void>;
   activateFarmPass: () => Promise<void>;
   updateRole: (role: UserRole, vehicleType?: VehicleType) => Promise<void>;
+  setDailyEarningGoal: (goal: number) => Promise<void>;
+  createSubscription: (subscription: Omit<FreshSubscription, 'id' | 'nextDelivery' | 'status'>) => void;
+  cancelSubscription: (subscriptionId: string) => void;
+  restockMachine: (machineId: string) => void;
+  getFarmerPayouts: () => { gross: number; commission: number; orders: number };
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -438,6 +525,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [listings, setListings] = useState<Listing[]>(SEED_LISTINGS);
   const [orders, setOrders] = useState<Order[]>([]);
   const [cropRequests, setCropRequests] = useState<CropRequest[]>(SEED_REQUESTS);
+  const [machines, setMachines] = useState<VendingMachine[]>(SEED_MACHINES);
+  const [subscriptions, setSubscriptions] = useState<FreshSubscription[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -446,6 +535,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const ordersJson = await AsyncStorage.getItem('farmlink_orders');
         const listingsJson = await AsyncStorage.getItem('farmlink_listings');
         const requestsJson = await AsyncStorage.getItem('farmlink_requests');
+        const machinesJson = await AsyncStorage.getItem('farmlink_machines');
+        const subscriptionsJson = await AsyncStorage.getItem('farmlink_subscriptions');
         if (userJson) setCurrentUser(JSON.parse(userJson));
         if (ordersJson) setOrders(JSON.parse(ordersJson));
         if (listingsJson) {
@@ -462,6 +553,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ...stored.filter((r) => !SEED_REQUESTS.find((s) => s.id === r.id)),
           ]);
         }
+        if (machinesJson) setMachines(JSON.parse(machinesJson));
+        if (subscriptionsJson) setSubscriptions(JSON.parse(subscriptionsJson));
       } catch {}
       setIsLoading(false);
     };
@@ -475,6 +568,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveRequests = async (reqs: CropRequest[]) => {
     const userReqs = reqs.filter((r) => !SEED_REQUESTS.find((s) => s.id === r.id));
     await AsyncStorage.setItem('farmlink_requests', JSON.stringify(userReqs));
+  };
+
+  const saveMachines = async (updatedMachines: VendingMachine[]) => {
+    await AsyncStorage.setItem('farmlink_machines', JSON.stringify(updatedMachines));
   };
 
   const setupUser = async (userInput: Omit<User, 'id'>) => {
@@ -532,6 +629,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const hasFarmPass = currentUser.hasFarmPass ?? false;
     const deliveryFee = hasFarmPass ? 0 : Math.max(20, Math.round(totalPrice * 0.1));
     const packagingDeposit = listing.packagingDeposit ?? 0;
+    const fulfilmentType = arguments[0].fulfilmentType ?? 'home_delivery';
+    const machineId = arguments[0].machineId;
+    const directFarmerPayout = totalPrice;
     const order: Order = {
       id: `order_${Date.now()}`,
       listingId,
@@ -548,18 +648,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       priceUnit: listing.priceUnit,
       quantityUnit: listing.quantityUnit,
       totalPrice,
-      deliveryFee,
+      deliveryFee: fulfilmentType === 'machine_pickup' ? 0 : deliveryFee,
       packagingDeposit,
       packagingType: listing.packagingType,
       packagingReturnRequested: false,
       packagingReturned: false,
       status: 'pending',
+      fulfilmentType,
+      machineId,
+      farmerPayout: directFarmerPayout,
+      platformCommission: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     const updated = [order, ...orders];
     setOrders(updated);
     saveOrders(updated);
+    if (fulfilmentType === 'machine_pickup' && machineId) {
+      const updatedMachines = machines.map((machine) => {
+        if (machine.id !== machineId) return machine;
+        const batches = machine.batches.map((batch) =>
+          batch.listingId === listingId ? { ...batch, quantity: Math.max(0, batch.quantity - quantity) } : batch,
+        );
+        const remaining = batches.reduce((sum, batch) => sum + batch.quantity, 0);
+        const capacity = batches.reduce((sum, batch) => sum + batch.capacity, 0);
+        return { ...machine, batches, status: remaining / Math.max(capacity, 1) < 0.3 ? 'low' as const : 'online' as const };
+      });
+      setMachines(updatedMachines);
+      saveMachines(updatedMachines);
+    }
     return order;
   };
 
@@ -608,6 +725,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updated = { ...currentUser, ...updates };
     setCurrentUser(updated);
     await AsyncStorage.setItem('farmlink_user', JSON.stringify(updated));
+  };
+
+  const setDailyEarningGoal = async (goal: number) => {
+    if (!currentUser) return;
+    const updated = { ...currentUser, dailyEarningGoal: goal };
+    setCurrentUser(updated);
+    await AsyncStorage.setItem('farmlink_user', JSON.stringify(updated));
+  };
+
+  const createSubscription = (subscription: Omit<FreshSubscription, 'id' | 'nextDelivery' | 'status'>) => {
+    const next = new Date();
+    next.setDate(next.getDate() + (subscription.frequency === 'weekly' ? 7 : 30));
+    const updated = [{ ...subscription, id: `sub_${Date.now()}`, nextDelivery: next.toISOString(), status: 'active' as const }, ...subscriptions];
+    setSubscriptions(updated);
+    AsyncStorage.setItem('farmlink_subscriptions', JSON.stringify(updated));
+  };
+
+  const cancelSubscription = (subscriptionId: string) => {
+    const updated = subscriptions.map((subscription) => subscription.id === subscriptionId ? { ...subscription, status: 'paused' as const } : subscription);
+    setSubscriptions(updated);
+    AsyncStorage.setItem('farmlink_subscriptions', JSON.stringify(updated));
+  };
+
+  const restockMachine = (machineId: string) => {
+    const updated = machines.map((machine) => {
+      if (machine.id !== machineId) return machine;
+      return {
+        ...machine,
+        status: 'online' as const,
+        lastSanitisedAt: new Date().toISOString(),
+        hygieneScore: 100,
+        nextRestockAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+        batches: machine.batches.map((batch) => ({ ...batch, quantity: batch.capacity, packedAt: new Date().toISOString() })),
+      };
+    });
+    setMachines(updated);
+    saveMachines(updated);
   };
 
   const switchRole = async () => {
@@ -665,6 +819,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     saveOrders(updated);
   };
 
+  const getFarmerPayouts = () => {
+    const farmerOrders = orders.filter((order) => order.farmerName === currentUser?.name && order.status === 'delivered');
+    const gross = farmerOrders.reduce((sum, order) => sum + (order.farmerPayout ?? order.totalPrice), 0);
+    return { gross, commission: 0, orders: farmerOrders.length };
+  };
+
   const saveAddress = async (addr: SavedAddress) => {
     if (!currentUser) return;
     const updated: User = { ...currentUser, savedAddress: addr };
@@ -718,6 +878,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         listings,
         orders,
         cropRequests,
+      machines,
+      subscriptions,
         setupUser,
         addListing,
         createOrder,
@@ -739,6 +901,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         saveAddress,
         activateFarmPass,
         updateRole,
+      setDailyEarningGoal,
+      createSubscription,
+      cancelSubscription,
+      restockMachine,
+      getFarmerPayouts,
       }}
     >
       {children}
