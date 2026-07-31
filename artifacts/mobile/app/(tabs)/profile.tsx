@@ -116,7 +116,7 @@ export default function ConsumerProfile() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.farmPassTitle, { color: colors.freshGreen }]}>FarmPass Active</Text>
             <Text style={[styles.farmPassSub, { color: colors.freshGreen + 'BB' }]}>
-              Free delivery & eco deposits waived on every order
+              Free delivery on eligible ₹199+ home orders
             </Text>
           </View>
           <View style={[styles.activePill, { backgroundColor: colors.freshGreen }]}>
@@ -132,7 +132,7 @@ export default function ConsumerProfile() {
           <Text style={styles.farmPassEmoji}>🌿</Text>
           <View style={{ flex: 1 }}>
             <Text style={[styles.farmPassTitle, { color: colors.foreground }]}>Get FarmPass</Text>
-            <Text style={[styles.farmPassSub, { color: colors.mutedForeground }]}>Free delivery every order · ₹49/month</Text>
+              <Text style={[styles.farmPassSub, { color: colors.mutedForeground }]}>Free eligible delivery · ₹49/month</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={18} color={colors.mutedForeground} />
         </TouchableOpacity>
@@ -230,7 +230,7 @@ export default function ConsumerProfile() {
           </View>
           <View style={styles.trustItem}>
             <Text style={styles.trustEmoji}>⚡</Text>
-            <Text style={[styles.trustLabel, { color: colors.mutedForeground }]}>Same-day{'\n'}delivery</Text>
+            <Text style={[styles.trustLabel, { color: colors.mutedForeground }]}>Fresh Station{'\n'}pickup</Text>
           </View>
         </View>
       </View>

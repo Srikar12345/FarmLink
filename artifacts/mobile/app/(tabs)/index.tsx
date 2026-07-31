@@ -90,11 +90,11 @@ export default function ConsumerHome() {
       <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.background }]}>
         {/* Top bar: delivery + chips */}
         <View style={styles.topBar}>
-          <View style={styles.deliveryRow}>
-            <MaterialCommunityIcons name="lightning-bolt" size={15} color={colors.primary} />
+              <View style={styles.deliveryRow}>
+                <MaterialCommunityIcons name="storefront-outline" size={15} color={colors.primary} />
             <View>
-              <Text style={[styles.deliverySmall, { color: colors.mutedForeground }]}>Delivery in</Text>
-              <Text style={[styles.deliveryBig, { color: colors.foreground }]}>45 minutes</Text>
+                  <Text style={[styles.deliverySmall, { color: colors.mutedForeground }]}>Fresh near you</Text>
+                  <Text style={[styles.deliveryBig, { color: colors.foreground }]}>Station pickup first</Text>
             </View>
           </View>
           <View style={styles.chipRow}>
@@ -181,10 +181,10 @@ export default function ConsumerHome() {
                 <Text style={{ fontSize: 22 }}>🌿</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.farmPassTitle, { color: colors.freshGreen }]}>
-                    FarmPass — Free delivery, every order
+                    FarmPass — Free eligible delivery
                   </Text>
                   <Text style={[styles.farmPassSub, { color: colors.mutedForeground }]}>
-                    ₹49/month · 3 orders pays for itself
+                    ₹49/month · ₹199+ home orders · pickup always free
                   </Text>
                 </View>
                 <MaterialCommunityIcons name="chevron-right" size={17} color={colors.freshGreen} />

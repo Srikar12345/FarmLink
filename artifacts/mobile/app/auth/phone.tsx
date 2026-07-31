@@ -58,10 +58,10 @@ export default function PhoneScreen() {
         {/* Hero text */}
         <View style={styles.hero}>
           <Text style={[styles.heroTitle, { color: colors.foreground }]}>
-            Fresh food.{'\n'}Farm prices.
+            Farm fresh.{'\n'}Farmer first.
           </Text>
           <Text style={[styles.heroSub, { color: colors.mutedForeground }]}>
-            Buy directly from local farmers — no middlemen, same-day delivery.
+            Direct farmer payments, nearby Fresh Stations, and home delivery when you need it.
           </Text>
         </View>
 
@@ -133,7 +133,7 @@ export default function PhoneScreen() {
 
         {/* Trust pills */}
         <View style={styles.pills}>
-          {['🌾 Zero commission', '♻️ Eco packaging', '⚡ Same-day delivery'].map((t) => (
+          {['🌾 Zero commission', '🏧 Fresh Stations', '🌿 FarmPass delivery'].map((t) => (
             <View key={t} style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.pillText, { color: colors.mutedForeground }]}>{t}</Text>
             </View>

@@ -48,6 +48,8 @@ export interface User {
   vehicleType?: VehicleType;
   savedAddress?: SavedAddress;
   hasFarmPass?: boolean;
+  farmPassPlan?: 'monthly' | 'yearly';
+  farmPassStartedAt?: string;
   dailyEarningGoal?: number;
 }
 
@@ -508,7 +510,7 @@ interface AppContextType {
   getMyRequests: () => CropRequest[];
   requestPackagingReturn: (orderId: string) => void;
   saveAddress: (addr: SavedAddress) => Promise<void>;
-  activateFarmPass: () => Promise<void>;
+  activateFarmPass: (plan?: 'monthly' | 'yearly') => Promise<void>;
   updateRole: (role: UserRole, vehicleType?: VehicleType) => Promise<void>;
   setDailyEarningGoal: (goal: number) => Promise<void>;
   createSubscription: (subscription: Omit<FreshSubscription, 'id' | 'nextDelivery' | 'status'>) => void;
@@ -617,10 +619,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     listingId,
     consumerAddress,
     quantity,
+    fulfilmentType = 'home_delivery',
+    machineId,
   }: {
     listingId: string;
     consumerAddress: string;
     quantity: number;
+    fulfilmentType?: 'machine_pickup' | 'home_delivery';
+    machineId?: string;
   }): Order | null => {
     if (!currentUser) return null;
     const listing = listings.find((l) => l.id === listingId);
@@ -629,8 +635,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const hasFarmPass = currentUser.hasFarmPass ?? false;
     const deliveryFee = hasFarmPass ? 0 : Math.max(20, Math.round(totalPrice * 0.1));
     const packagingDeposit = listing.packagingDeposit ?? 0;
-    const fulfilmentType = arguments[0].fulfilmentType ?? 'home_delivery';
-    const machineId = arguments[0].machineId;
     const directFarmerPayout = totalPrice;
     const order: Order = {
       id: `order_${Date.now()}`,
@@ -842,9 +846,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
   };
 
-  const activateFarmPass = async () => {
+  const activateFarmPass = async (plan: 'monthly' | 'yearly' = 'monthly') => {
     if (!currentUser) return;
-    const updated: User = { ...currentUser, hasFarmPass: true };
+    const updated: User = {
+      ...currentUser,
+      hasFarmPass: true,
+      farmPassPlan: plan,
+      farmPassStartedAt: new Date().toISOString(),
+    };
     setCurrentUser(updated);
     await AsyncStorage.setItem('farmlink_user', JSON.stringify(updated));
   };

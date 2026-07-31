@@ -104,7 +104,6 @@ export default function ListingDetail() {
 
   const handlePaymentSuccess = (_paymentId: string) => {
     setShowPayment(false);
-    if (!savedAddress) return;
     const order = createOrder({
       listingId: listing.id,
       consumerAddress: fulfilment === 'machine_pickup' ? `${nearbyMachine?.apartment ?? 'Nearby FarmLink Station'} · self pickup` : savedAddress?.fullAddress ?? '',
@@ -464,12 +463,12 @@ export default function ListingDetail() {
             onPress={handleOrder}
             activeOpacity={0.85}
           >
-             {(fulfilment === 'machine_pickup' || savedAddress) && (
-              <View style={styles.rzpBtnIcon}>
-                <Text style={styles.rzpBtnIconText}>R</Text>
+              {(fulfilment === 'machine_pickup' || savedAddress) && (
+               <View style={styles.upiBtnIcon}>
+                 <Text style={styles.upiBtnIconText}>₹</Text>
               </View>
             )}
-            <Text style={[styles.orderBtnText, { color: savedAddress ? '#fff' : colors.mutedForeground }]}>
+             <Text style={[styles.orderBtnText, { color: (fulfilment === 'machine_pickup' || savedAddress) ? '#fff' : colors.mutedForeground }]}>
                {fulfilment === 'machine_pickup' ? `Pay ₹${grandTotal} · Pick up fresh` : savedAddress ? `Pay ₹${grandTotal} · Home delivery` : 'Add Address to Order'}
             </Text>
           </TouchableOpacity>
@@ -669,7 +668,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   orderBtn: { borderRadius: 14, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  rzpBtnIcon: { width: 24, height: 24, borderRadius: 6, backgroundColor: '#3395FF', alignItems: 'center', justifyContent: 'center' },
-  rzpBtnIconText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+   upiBtnIcon: { width: 24, height: 24, borderRadius: 6, backgroundColor: '#16A34A', alignItems: 'center', justifyContent: 'center' },
+   upiBtnIconText: { color: '#fff', fontSize: 15, fontFamily: 'Inter_700Bold' },
   orderBtnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
 });

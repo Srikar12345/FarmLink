@@ -17,7 +17,8 @@ import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 
 const BENEFITS = [
-  { emoji: '🚴', text: 'Free delivery on every order, every time' },
+  { emoji: '🚴', text: 'Free home delivery on eligible orders of ₹199 or more' },
+  { emoji: '🏧', text: 'Free Fresh Station pickup always — no membership needed' },
   { emoji: '⚡', text: 'Priority order matching — riders reach you first' },
   { emoji: '🌿', text: 'Eco-packaging deposit waived on first order each month' },
   { emoji: '🔔', text: 'Early alerts when fresh harvests arrive near you' },
@@ -39,12 +40,12 @@ export default function FarmPassScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setActivating(true);
     await new Promise((r) => setTimeout(r, 800)); // simulate payment
-    await activateFarmPass();
+    await activateFarmPass(plan);
     setActivating(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert(
       '🌿 FarmPass Active!',
-      `Your ${plan === 'monthly' ? '₹49/month' : '₹499/year'} FarmPass is now active. Enjoy free delivery on all orders!`,
+      `Your ${plan === 'monthly' ? '₹49/month' : '₹499/year'} FarmPass is now active. Eligible ₹199+ home orders now have ₹0 delivery.`,
       [{ text: 'Start Shopping 🛒', onPress: () => router.replace('/(tabs)' as any) }],
     );
   };
@@ -64,7 +65,7 @@ export default function FarmPassScreen() {
         <Text style={styles.heroEmoji}>🌿</Text>
         <Text style={[styles.heroTitle, { color: colors.freshGreen }]}>FarmPass</Text>
         <Text style={[styles.heroSub, { color: colors.mutedForeground }]}>
-          Free delivery. Every order. Always.
+          Delivery value that keeps farmers paid and riders earning.
         </Text>
         {isActive && (
           <View style={[styles.activeBadge, { backgroundColor: colors.freshGreen }]}>
@@ -78,9 +79,8 @@ export default function FarmPassScreen() {
       <View style={[styles.contextCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={[styles.contextTitle, { color: colors.foreground }]}>Why a delivery fee exists</Text>
         <Text style={[styles.contextText, { color: colors.mutedForeground }]}>
-          Our riders are local community members, not algorithms. A ₹30–50 delivery fee is their earnings for getting
-          fresh produce to your door in the same day. FarmPass covers this cost so riders still earn, but you don't pay
-          per trip — we spread it across thousands of orders.
+          Farmers always receive 100% of the produce price. A ₹30–50 delivery fee supports local riders and operations.
+          FarmPass spreads that cost across members, so eligible ₹199+ home orders have ₹0 delivery while riders still earn.
         </Text>
       </View>
 
@@ -146,14 +146,14 @@ export default function FarmPassScreen() {
           <View style={{ flex: 1 }}>
             <Text style={[styles.activeTitle, { color: colors.freshGreen }]}>FarmPass is active!</Text>
             <Text style={[styles.activeText, { color: colors.mutedForeground }]}>
-              You're getting free delivery on every order. Enjoy! 🎉
+              Eligible ₹199+ home orders have ₹0 delivery. Fresh Station pickup is always free. 🎉
             </Text>
           </View>
         </View>
       )}
 
       <Text style={[styles.footer, { color: colors.mutedForeground }]}>
-        Demo mode: FarmPass activation is instant and free for testing. No real payment collected.
+        Pilot mode: activation is instant for testing. Before launch, connect a subscription payment provider so every membership charge is verified.
       </Text>
     </ScrollView>
   );
