@@ -17,6 +17,15 @@ Zero-commission farmer-to-consumer network. Inspired by Namma Yatri (auto-ricksh
 - Acts as micro dark store; consumers walk down and scan QR to purchase.
 - Machines depreciated on CapEx — no fixed operating cost vs. traditional dark store lease.
 
+## Freshness, hygiene, and inventory intelligence
+Machines are operated as hygienic fresh-produce micro dark stores, not passive vending cabinets. Every SKU/batch needs harvest date, packing date, expiry/freshness window, temperature history, and a sanitation/restock check.
+
+Inventory should replenish from predicted local demand every 6–12 hours, with the interval chosen per machine and product velocity — not on a fixed blanket schedule. Forecasts use apartment purchases, B2B commitments, seasonality, weather, nearby machine demand, stock age, and perishability.
+
+**Why:** High inventory turnover keeps produce genuinely fresh, reduces spoilage, and avoids the fixed-rent dark-store model. The system should make proactive decisions: restock fast sellers, reduce or bundle slow/near-expiry stock, route excess to nearby machines/B2B, and guide farmers on crops to plant.
+
+**How to apply:** Prioritize real batch inventory, FEFO (first-expiring-first-out) allocation, temperature and cleaning logs, low-stock/expiry alerts, and stock-routing decisions before advanced marketing features.
+
 ## Delivery model
 - Home delivery kept as optional extra.
 - Human vs. robot delivery chosen by cost-benefit analysis at runtime.
