@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -16,6 +17,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastBanner } from '@/components/ToastBanner';
 import { AppProvider } from '@/context/AppContext';
+
+// Conditionally import Vercel Analytics for web only
+let Analytics: React.ComponentType | null = null;
+if (Platform.OS === 'web') {
+  try {
+    const module = require('@vercel/analytics/react');
+    Analytics = module.Analytics;
+  } catch (e) {
+    // Analytics not available, continue without it
+  }
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,6 +61,7 @@ function RootLayoutNav() {
       />
     </Stack>
     <ToastBanner />
+    {Analytics && <Analytics />}
     </>
   );
 }
