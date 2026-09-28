@@ -1,319 +1,559 @@
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
   FlatList,
+  ImageBackground,
   Platform,
-  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+  useWindowDimensions,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ListingCard } from "@/components/ListingCard";
+import { useApp, type ProduceCategory } from "@/context/AppContext";
+import { useColors } from "@/hooks/useColors";
 
-import { ListingCard } from '@/components/ListingCard';
-import { LiveFeedBanner } from '@/components/LiveFeedBanner';
-import { useApp, type ProduceCategory } from '@/context/AppContext';
-import { useColors } from '@/hooks/useColors';
-
-type CatKey = ProduceCategory | 'all';
-
-const CATEGORIES: {
-  key: CatKey;
+const categories: {
+  key: ProduceCategory | "all";
   label: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  color: string;
-  bg: string;
 }[] = [
-  { key: 'all',        label: 'All',         icon: 'apps',                   color: '#1B8A3C', bg: '#DCFCE7' },
-  { key: 'grains',     label: 'Rice &\nGrains', icon: 'grain',               color: '#B45309', bg: '#FEF3C7' },
-  { key: 'seafood',    label: 'Seafood',      icon: 'fish',                   color: '#0891B2', bg: '#CFFAFE' },
-  { key: 'vegetables', label: 'Veggies',      icon: 'carrot',                 color: '#16A34A', bg: '#DCFCE7' },
-  { key: 'fruits',     label: 'Fruits',       icon: 'fruit-grapes',           color: '#EA580C', bg: '#FFEDD5' },
-  { key: 'herbs',      label: 'Herbs &\nSpices', icon: 'leaf',               color: '#7C3AED', bg: '#EDE9FE' },
-  { key: 'dairy',      label: 'Dairy',        icon: 'cow',                    color: '#2563EB', bg: '#DBEAFE' },
-  { key: 'other',      label: 'More',         icon: 'basket',                 color: '#6B7280', bg: '#F3F4F6' },
+  { key: "all", label: "Everything", icon: "basket-outline" },
+  { key: "vegetables", label: "Vegetables", icon: "carrot" },
+  { key: "fruits", label: "Fruits", icon: "fruit-grapes" },
+  { key: "grains", label: "Rice & grains", icon: "grain" },
+  { key: "dairy", label: "Dairy", icon: "cow" },
+  { key: "herbs", label: "Herbs & spices", icon: "leaf" },
+  { key: "seafood", label: "Seafood", icon: "fish" },
+  { key: "meat", label: "Meat", icon: "food-drumstick-outline" },
+  { key: "other", label: "More", icon: "dots-horizontal" },
 ];
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  return 'Good evening';
-}
 
 export default function ConsumerHome() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { listings, currentUser, getUserOrders } = useApp();
-
-  const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<CatKey>('all');
-  const [refreshing, setRefreshing] = useState(false);
-
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
-
-  const filtered = listings.filter((l) => {
-    const matchCat = activeCategory === 'all' || l.category === activeCategory;
-    const matchSearch =
-      !search ||
-      l.produceName.toLowerCase().includes(search.toLowerCase()) ||
-      (l.shortName ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      l.farmerName.toLowerCase().includes(search.toLowerCase()) ||
-      l.farmerLocation.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch && l.isAvailable;
-  });
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setRefreshing(false);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<ProduceCategory | "all">("all");
+  const [sort, setSort] = useState<"recent" | "name">("recent");
+  const columns = width >= 1000 ? 4 : width >= 650 ? 3 : 2;
+  const query = search.trim().toLocaleLowerCase();
+  const filtered = listings
+    .filter(
+      (l) =>
+        l.isAvailable &&
+        l.quantity > 0 &&
+        (category === "all" || category === l.category) &&
+        [l.produceName, l.shortName, l.farmerName, l.farmerLocation].some(
+          (value) => value?.toLocaleLowerCase().includes(query),
+        ),
+    )
+    .sort((a, b) =>
+      sort === "name"
+        ? a.produceName.localeCompare(b.produceName)
+        : (Date.parse(b.harvestTime) || 0) - (Date.parse(a.harvestTime) || 0),
+    );
+  const activeOrders = getUserOrders().filter(
+    (o) => o.status === "pending" || o.status === "picked_up",
+  );
+  const reset = () => {
+    setSearch("");
+    setCategory("all");
   };
 
-  const monthlySavings = Math.round(
-    getUserOrders()
-      .filter((o) => {
-        const d = new Date(o.createdAt);
-        const n = new Date();
-        return o.status === 'delivered' && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
-      })
-      .reduce((s, o) => s + o.totalPrice * 0.35, 0),
-  );
-
-  const activeCat = CATEGORIES.find((c) => c.key === activeCategory);
-
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* ── Fixed Header ── */}
-      <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.background }]}>
-        {/* Top bar: delivery + chips */}
-        <View style={styles.topBar}>
-              <View style={styles.deliveryRow}>
-                <MaterialCommunityIcons name="storefront-outline" size={15} color={colors.primary} />
-            <View>
-                  <Text style={[styles.deliverySmall, { color: colors.mutedForeground }]}>Fresh near you</Text>
-                  <Text style={[styles.deliveryBig, { color: colors.foreground }]}>Station pickup first</Text>
-            </View>
+    <View
+      style={[
+        s.root,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Platform.OS === "web" ? 16 : insets.top,
+        },
+      ]}
+    >
+      <View style={s.shell}>
+        <View style={s.header}>
+          <View style={s.brand}>
+            <MaterialCommunityIcons
+              name="sprout"
+              size={30}
+              color={colors.primary}
+            />
+            <Text style={[s.logo, { color: colors.foreground }]}>
+              farmlink<Text style={{ color: colors.primary }}>.</Text>
+            </Text>
           </View>
-          <View style={styles.chipRow}>
-            {monthlySavings > 0 && (
-              <View style={[styles.chip, { backgroundColor: colors.freshGreenBg }]}>
-                <MaterialCommunityIcons name="piggy-bank-outline" size={12} color={colors.freshGreen} />
-                <Text style={[styles.chipText, { color: colors.freshGreen }]}>₹{monthlySavings} saved</Text>
-              </View>
-            )}
-            <View style={[styles.chip, { backgroundColor: colors.secondary }]}>
-              <Feather name="map-pin" size={11} color={colors.primary} />
-              <Text style={[styles.chipText, { color: colors.primary }]}>
-                {currentUser?.location?.split(',')[0] ?? 'Nearby'}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="View profile and location"
+            onPress={() => router.push("/(tabs)/profile")}
+            style={s.location}
+          >
+            <Feather name="map-pin" size={16} color={colors.primary} />
+            <View style={{ flexShrink: 1 }}>
+              <Text style={[s.eyebrow, { color: colors.mutedForeground }]}>
+                YOUR COMMUNITY
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={[s.locationText, { color: colors.foreground }]}
+              >
+                {currentUser?.location || "East Godavari"}
               </Text>
             </View>
-          </View>
+            <Feather
+              name="chevron-right"
+              size={16}
+              color={colors.mutedForeground}
+            />
+          </TouchableOpacity>
         </View>
-
-        {/* Search */}
-        <View style={[styles.search, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Feather name="search" size={17} color={colors.mutedForeground} />
+        <View
+          style={[
+            s.search,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
+          <Feather name="search" size={20} color={colors.primary} />
           <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search rice, prawns, coconuts, turmeric…"
-            placeholderTextColor={colors.mutedForeground}
+            accessibilityLabel="Search produce, farmer or village"
             value={search}
             onChangeText={setSearch}
+            placeholder="Find produce, a farmer, or a village"
+            placeholderTextColor={colors.mutedForeground}
+            style={[s.input, { color: colors.foreground }]}
+            returnKeyType="search"
           />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <Feather name="x" size={15} color={colors.mutedForeground} />
+          {!!search && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+              onPress={() => setSearch("")}
+              style={s.clear}
+            >
+              <Feather name="x" size={20} color={colors.foreground} />
             </TouchableOpacity>
           )}
         </View>
-      </View>
-
-      {/* ── Scrollable content ── */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-        }
-        ListHeaderComponent={
-          <View style={styles.listHeader}>
-            <LiveFeedBanner />
-
-            <TouchableOpacity
-              style={[styles.machineHero, { backgroundColor: '#052E16' }]}
-              onPress={() => router.push('/machines' as any)}
-              activeOpacity={0.88}
-            >
-              <Text style={styles.machineEmoji}>🏧</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.machineHeroTitle}>Fresh near you — 6–12h replenishment</Text>
-                <Text style={styles.machineHeroSub}>Hygiene-checked micro store · Pick up with ₹0 delivery fee</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color="#86EFAC" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.basketHero, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-              onPress={() => router.push('/baskets' as any)}
-              activeOpacity={0.88}
-            >
-              <Text style={{ fontSize: 25 }}>🥬</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.basketHeroTitle, { color: colors.foreground }]}>Freshness Plans</Text>
-                <Text style={[styles.basketHeroSub, { color: colors.mutedForeground }]}>Weekly baskets help us stock exactly what your building needs</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.primary} />
-            </TouchableOpacity>
-
-            {/* FarmPass nudge */}
-            {!currentUser?.hasFarmPass && (
-              <TouchableOpacity
-                style={[styles.farmPass, { backgroundColor: colors.freshGreenBg, borderColor: colors.freshGreen + '50' }]}
-                onPress={() => router.push('/farmpass')}
-                activeOpacity={0.85}
-              >
-                <Text style={{ fontSize: 22 }}>🌿</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.farmPassTitle, { color: colors.freshGreen }]}>
-                    FarmPass — Free eligible delivery
-                  </Text>
-                  <Text style={[styles.farmPassSub, { color: colors.mutedForeground }]}>
-                    ₹49/month · ₹199+ home orders · pickup always free
-                  </Text>
-                </View>
-                <MaterialCommunityIcons name="chevron-right" size={17} color={colors.freshGreen} />
-              </TouchableOpacity>
-            )}
-
-            {/* ── Category grid ── */}
-            <View>
-              <Text style={[styles.sectionHead, { color: colors.foreground }]}>Shop by Category</Text>
-              <View style={styles.catGrid}>
-                {CATEGORIES.map((cat) => {
-                  const active = activeCategory === cat.key;
-                  return (
+        <FlatList
+          key={columns}
+          numColumns={columns}
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          columnWrapperStyle={s.row}
+          contentContainerStyle={s.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={s.sections}>
+              {!query && category === "all" && (
+                <ImageBackground
+                  source={require("../../assets/images/produce_hero.png")}
+                  imageStyle={s.heroImage}
+                  style={s.hero}
+                >
+                  <View style={s.heroShade}>
+                    <Text style={s.heroKicker}>ROOTED IN EAST GODAVARI</Text>
+                    <Text style={s.heroTitle}>
+                      Good food.{"\n"}Closer to its roots.
+                    </Text>
+                    <Text style={s.heroBody}>
+                      Meet the people behind your produce. Choose what belongs
+                      on your table.
+                    </Text>
+                    <View style={s.heroTag}>
+                      <MaterialCommunityIcons
+                        name="sprout"
+                        size={16}
+                        color="#DDF3BF"
+                      />
+                      <Text style={s.heroTagText}>
+                        From local growers, with care
+                      </Text>
+                    </View>
+                  </View>
+                </ImageBackground>
+              )}
+              <Text style={[s.demo, { color: colors.mutedForeground }]}>
+                Pilot experience · Sample listings and demo checkout
+              </Text>
+              {activeOrders.length > 0 && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.push("/(tabs)/orders")}
+                  style={[s.order, { backgroundColor: colors.secondary }]}
+                >
+                  <Feather name="package" size={22} color={colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.bold, { color: colors.foreground }]}>
+                      {activeOrders.length} active{" "}
+                      {activeOrders.length === 1 ? "order" : "orders"}
+                    </Text>
+                    <Text style={[s.small, { color: colors.mutedForeground }]}>
+                      See the latest status and order details
+                    </Text>
+                  </View>
+                  <Feather
+                    name="arrow-right"
+                    size={20}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              )}
+              <View>
+                <Text style={[s.heading, { color: colors.foreground }]}>
+                  What's cooking today?
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={s.categories}
+                >
+                  {categories.map((cat) => (
                     <TouchableOpacity
                       key={cat.key}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: category === cat.key }}
+                      onPress={() => setCategory(cat.key)}
                       style={[
-                        styles.catTile,
-                        { backgroundColor: active ? cat.color : cat.bg },
+                        s.category,
+                        {
+                          backgroundColor:
+                            category === cat.key ? colors.primary : colors.card,
+                          borderColor:
+                            category === cat.key
+                              ? colors.primary
+                              : colors.border,
+                        },
                       ]}
-                      onPress={() => setActiveCategory(cat.key)}
-                      activeOpacity={0.8}
                     >
                       <MaterialCommunityIcons
                         name={cat.icon}
-                        size={26}
-                        color={active ? '#fff' : cat.color}
+                        size={21}
+                        color={category === cat.key ? "#fff" : colors.primary}
                       />
                       <Text
-                        style={[styles.catLabel, { color: active ? '#fff' : cat.color }]}
-                        numberOfLines={2}
+                        style={[
+                          s.categoryLabel,
+                          {
+                            color:
+                              category === cat.key ? "#fff" : colors.foreground,
+                          },
+                        ]}
                       >
                         {cat.label}
                       </Text>
                     </TouchableOpacity>
-                  );
-                })}
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={s.productHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.heading, { color: colors.foreground }]}>
+                    {query
+                      ? "Your search results"
+                      : category === "all"
+                        ? "From our growers"
+                        : categories.find((c) => c.key === category)?.label}
+                  </Text>
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={[s.small, { color: colors.mutedForeground }]}
+                  >
+                    {filtered.length} available{" "}
+                    {filtered.length === 1 ? "listing" : "listings"} · harvest
+                    times reported by growers
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={`Sort: ${sort === "recent" ? "Latest harvest" : "Name A to Z"}. Tap to change`}
+                  onPress={() => setSort(sort === "recent" ? "name" : "recent")}
+                  style={[s.sort, { borderColor: colors.border }]}
+                >
+                  <Feather name="sliders" size={15} color={colors.primary} />
+                  <Text style={[s.small, { color: colors.foreground }]}>
+                    {sort === "recent" ? "Latest harvest" : "Name A–Z"}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            {/* Products section header */}
-            <View style={styles.productsBar}>
-              <Text style={[styles.sectionHead, { color: colors.foreground }]}>
-                {activeCategory === 'all' ? 'All Products' : activeCat?.label.replace('\n', ' ')}
+          }
+          renderItem={({ item }) => (
+            <View style={{ width: `${100 / columns}%`, padding: 5 }}>
+              <ListingCard listing={item} />
+            </View>
+          )}
+          ListEmptyComponent={
+            <View style={[s.empty, { backgroundColor: colors.card }]}>
+              <MaterialCommunityIcons
+                name="basket-outline"
+                size={42}
+                color={colors.primary}
+              />
+              <Text style={[s.heading, { color: colors.foreground }]}>
+                Let's find something else
               </Text>
-              <View style={[styles.countBadge, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.countText, { color: colors.primary }]}>
-                  {filtered.length} items
-                </Text>
+              <Text style={[s.emptyText, { color: colors.mutedForeground }]}>
+                No available produce matches these filters. Try another name, or
+                tell growers what you need.
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={reset}
+                style={[s.action, { backgroundColor: colors.primary }]}
+              >
+                <Text style={s.actionText}>Clear filters</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.push("/(tabs)/requests")}
+                style={s.clear}
+              >
+                <Text style={{ color: colors.primary }}>Request produce →</Text>
+              </TouchableOpacity>
+            </View>
+          }
+          ListFooterComponent={
+            <View style={s.footer}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.push("/(tabs)/requests")}
+                style={[s.request, { backgroundColor: colors.secondary }]}
+              >
+                <MaterialCommunityIcons
+                  name="sprout-outline"
+                  size={30}
+                  color={colors.primary}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.heading, { color: colors.foreground }]}>
+                    Your next meal starts with a grower.
+                  </Text>
+                  <Text style={[s.small, { color: colors.mutedForeground }]}>
+                    Can't find an ingredient? Share your demand so farmers can
+                    plan what to grow.
+                  </Text>
+                  <Text style={[s.link, { color: colors.primary }]}>
+                    Request produce →
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <View style={s.services}>
+                {[
+                  {
+                    label: "Pickup stations",
+                    note: "Explore station availability",
+                    route: "/machines",
+                    icon: "map-pin",
+                  },
+                  {
+                    label: "Weekly baskets",
+                    note: "Plan your regular essentials",
+                    route: "/baskets",
+                    icon: "calendar",
+                  },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.route}
+                    accessibilityRole="button"
+                    onPress={() => router.push(item.route as any)}
+                    style={[
+                      s.service,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name={item.icon as "map-pin" | "calendar"}
+                      size={22}
+                      color={colors.primary}
+                    />
+                    <Text style={[s.bold, { color: colors.foreground }]}>
+                      {item.label}
+                    </Text>
+                    <Text style={[s.small, { color: colors.mutedForeground }]}>
+                      {item.note}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <MaterialCommunityIcons name="basket-off-outline" size={52} color={colors.border} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nothing here yet</Text>
-            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-              Try a different category or check back soon
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => <ListingCard listing={item} />}
-      />
+          }
+        />
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   root: { flex: 1 },
-
-  /* header */
-  header: { paddingHorizontal: 16, paddingBottom: 10 },
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  deliveryRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  deliverySmall: { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  deliveryBig: { fontSize: 15, fontFamily: 'Inter_700Bold' },
-  chipRow: { flexDirection: 'row', gap: 6, alignItems: 'center' },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 20 },
-  chipText: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
-
-  /* search */
-  search: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderRadius: 14,
-    paddingHorizontal: 13, paddingVertical: 11, gap: 9,
+  shell: { flex: 1, width: "100%", maxWidth: 1180, alignSelf: "center" },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
   },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular' },
-
-  /* list */
-  listContent: { paddingHorizontal: 16, paddingBottom: 110 },
-  row: { gap: 10, marginBottom: 10 },
-  listHeader: { gap: 18, marginBottom: 6 },
-
-  /* farmpass */
-  farmPass: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    padding: 13, borderRadius: 14, borderWidth: 1,
-  },
-  machineHero: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16 },
-  machineEmoji: { fontSize: 28 },
-  machineHeroTitle: { color: '#F0FDF4', fontSize: 13, fontFamily: 'Inter_700Bold' },
-  machineHeroSub: { color: '#86EFAC', fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 3 },
-  basketHero: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 16, borderWidth: 1 },
-  basketHeroTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
-  basketHeroSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 3 },
-  farmPassTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  farmPassSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 },
-
-  /* categories */
-  sectionHead: { fontSize: 17, fontFamily: 'Inter_700Bold', marginBottom: 12 },
-  catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catTile: {
-    width: '22.5%',
-    aspectRatio: 0.88,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  brand: { flexDirection: "row", alignItems: "center", gap: 5 },
+  logo: { fontSize: 27, fontFamily: "Inter_700Bold", letterSpacing: -1.3 },
+  location: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 7,
-    padding: 8,
+    flexShrink: 1,
+    minHeight: 44,
   },
-  catLabel: { fontSize: 10, fontFamily: 'Inter_600SemiBold', textAlign: 'center', lineHeight: 13 },
-
-  /* products bar */
-  productsBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  countBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  countText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-
-  /* empty */
-  empty: { alignItems: 'center', paddingTop: 40, gap: 10 },
-  emptyTitle: { fontSize: 17, fontFamily: 'Inter_600SemiBold' },
-  emptyDesc: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center' },
+  eyebrow: { fontSize: 9, letterSpacing: 1, fontFamily: "Inter_600SemiBold" },
+  locationText: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 3 },
+  search: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    paddingLeft: 15,
+    paddingRight: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 16,
+    minHeight: 52,
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    paddingVertical: 14,
+  },
+  clear: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  content: { paddingHorizontal: 15, paddingBottom: 110 },
+  row: { alignItems: "stretch" },
+  sections: { gap: 20, marginHorizontal: 5, marginBottom: 12 },
+  hero: {
+    minHeight: 260,
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#193D2D",
+  },
+  heroImage: { borderRadius: 24 },
+  heroShade: {
+    flex: 1,
+    padding: 25,
+    backgroundColor: "rgba(8,35,23,0.78)",
+    alignItems: "flex-start",
+  },
+  heroKicker: {
+    color: "#DDF3BF",
+    fontSize: 10,
+    letterSpacing: 2,
+    fontFamily: "Inter_600SemiBold",
+  },
+  heroTitle: {
+    color: "#fff",
+    fontSize: 34,
+    lineHeight: 39,
+    letterSpacing: -1.2,
+    fontFamily: "Inter_700Bold",
+    marginTop: 15,
+  },
+  heroBody: {
+    color: "#F0F3ED",
+    fontSize: 14,
+    lineHeight: 21,
+    maxWidth: 370,
+    marginTop: 10,
+    fontFamily: "Inter_400Regular",
+  },
+  heroTag: {
+    flexDirection: "row",
+    gap: 7,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  heroTagText: {
+    color: "#DDF3BF",
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+  },
+  heading: {
+    fontSize: 19,
+    lineHeight: 25,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.4,
+  },
+  categories: { gap: 8, paddingTop: 13 },
+  category: {
+    minHeight: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  categoryLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  productHeader: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 12,
+  },
+  small: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: "Inter_400Regular",
+    marginTop: 3,
+  },
+  sort: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    minHeight: 44,
+  },
+  order: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 16,
+    gap: 12,
+  },
+  bold: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  empty: { padding: 25, alignItems: "center", gap: 12, borderRadius: 20 },
+  emptyText: {
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 21,
+    maxWidth: 400,
+  },
+  action: {
+    paddingHorizontal: 24,
+    minHeight: 46,
+    justifyContent: "center",
+    borderRadius: 24,
+  },
+  actionText: { color: "#fff", fontFamily: "Inter_600SemiBold" },
+  footer: { marginHorizontal: 5, gap: 20, marginTop: 28 },
+  request: { flexDirection: "row", gap: 15, padding: 22, borderRadius: 20 },
+  link: { marginTop: 14, fontFamily: "Inter_700Bold", fontSize: 13 },
+  services: { flexDirection: "row", gap: 12 },
+  service: { flex: 1, padding: 18, borderRadius: 18, borderWidth: 1, gap: 8 },
+  demo: { fontSize: 11, lineHeight: 17, textAlign: "center" },
 });
